@@ -34,7 +34,7 @@ local now_if_args = _G.Config.now_if_args
 -- - `:h mini.nvim-color-schemes` - list of other color schemes
 -- - `:h MiniHues-examples` - how to define highlighting with 'mini.hues'
 -- - 'plugin/40_plugins.lua' honorable mentions - other good color schemes
-now(function() vim.cmd('colorscheme miniwinter') end)
+-- now(function() vim.cmd('colorscheme miniwinter') end)
 
 -- You can try these other 'mini.hues'-based color schemes (uncomment with `gcc`):
 -- now(function() vim.cmd('colorscheme minispring') end)
@@ -295,19 +295,19 @@ later(function()
       { mode = 'n', keys = ']' },
       { mode = 'x', keys = '[' },
       { mode = 'x', keys = ']' },
-      { mode = 'i', keys = '<C-x>' },    -- Built-in completion
-      { mode = 'n', keys = 'g' },        -- `g` key
+      { mode = 'i', keys = '<C-x>' }, -- Built-in completion
+      { mode = 'n', keys = 'g' },     -- `g` key
       { mode = 'x', keys = 'g' },
-      { mode = 'n', keys = "'" },        -- Marks
+      { mode = 'n', keys = "'" },     -- Marks
       { mode = 'n', keys = '`' },
       { mode = 'x', keys = "'" },
       { mode = 'x', keys = '`' },
-      { mode = 'n', keys = '"' },        -- Registers
+      { mode = 'n', keys = '"' }, -- Registers
       { mode = 'x', keys = '"' },
       { mode = 'i', keys = '<C-r>' },
       { mode = 'c', keys = '<C-r>' },
-      { mode = 'n', keys = '<C-w>' },    -- Window commands
-      { mode = 'n', keys = 'z' },        -- `z` key
+      { mode = 'n', keys = '<C-w>' }, -- Window commands
+      { mode = 'n', keys = 'z' },     -- `z` key
       { mode = 'x', keys = 'z' },
     },
   })
@@ -399,7 +399,7 @@ end)
 --
 -- It is not enabled by default because its effects are a matter of taste.
 -- Uncomment next line (use `gcc`) to enable.
--- later(function() require('mini.cursorword').setup() end)
+later(function() require('mini.cursorword').setup() end)
 
 -- Work with diff hunks that represent the difference between the buffer text and
 -- some reference text set by a source. Default source uses text from Git index.
@@ -482,6 +482,14 @@ later(function() require('mini.git').setup() end)
 --
 -- See also:
 -- - `:h MiniHipatterns-examples` - examples of common setups
+-- Limpiar cache de Tailwind cuando cambia el colorscheme
+vim.api.nvim_create_autocmd("ColorScheme", {
+  callback = function()
+    require('utils.tailwind-colors').reset_cache()
+  end,
+  desc = "Reset Tailwind highlight cache on colorscheme change",
+})
+
 later(function()
   local hipatterns = require('mini.hipatterns')
   local hi_words = MiniExtra.gen_highlighter.words
@@ -496,6 +504,70 @@ later(function()
 
       -- Highlight hex color string (#aabbcc) with that color as a background
       hex_color = hipatterns.gen_highlighter.hex_color(),
+
+      -- Highlight Tailwind CSS color classes
+      tailwind = {
+        pattern = function()
+          -- Solo activar en archivos web
+          local ft = vim.bo.filetype
+          local allowed = {
+            "html", "css", "scss", "less",
+            "javascript", "javascriptreact", "typescript", "typescriptreact",
+            "vue", "svelte",
+          }
+          if not vim.tbl_contains(allowed, ft) then
+            return nil
+          end
+          -- Detecta: prefijo-color-tonalidad (ej: text-blue-500, bg-red-600/50)
+          return "%f[%w:-]()[%w:-]+%-[a-z%-]+%-%d+/?%d*()%f[^%w:-]"
+        end,
+
+        group = function(_, _, match_data)
+          local match = match_data.full_match
+          -- Extraer color y tonalidad
+          local color, shade = match:match("[%w-]+%-([a-z%-]+)%-(%d+)")
+          shade = tonumber(shade)
+
+          local tw = require('utils.tailwind-colors')
+          local bg_hex = vim.tbl_get(tw.colors, color, shade)
+
+          if bg_hex then
+            local hl_group = "MiniHipatternsTailwind" .. color .. shade
+
+            -- Crear grupo solo si no existe en cache
+            if not tw.hl_cache[hl_group] then
+              tw.hl_cache[hl_group] = true
+
+              -- Lógica de contraste para foreground
+              local fg_shade = shade == 500 and 950 or shade < 500 and 900 or 100
+              local fg_hex = vim.tbl_get(tw.colors, color, fg_shade)
+
+              vim.api.nvim_set_hl(0, hl_group, {
+                bg = "#" .. bg_hex,
+                fg = "#" .. fg_hex,
+              })
+            end
+
+            return hl_group
+          end
+        end,
+
+        extmark_opts = { priority = 2000 },
+      },
+
+      -- Highlight Git conflict markers
+      git_conflict_start = {
+        pattern = '^<<<<<<< .*',
+        group = 'DiffDelete',
+      },
+      git_conflict_sep = {
+        pattern = '^=======',
+        group = 'DiffChange',
+      },
+      git_conflict_end = {
+        pattern = '^>>>>>>> .*',
+        group = 'DiffAdd',
+      },
     },
   })
 end)
@@ -581,9 +653,9 @@ later(function()
   -- Map built-in navigation characters to force map refresh
   for _, key in ipairs({ 'n', 'N', '*', '#' }) do
     local rhs = key
-      -- Also open enough folds when jumping to the next match
-      .. 'zv'
-      .. '<Cmd>lua MiniMap.refresh({}, { lines = false, scrollbar = false })<CR>'
+        -- Also open enough folds when jumping to the next match
+        .. 'zv'
+        .. '<Cmd>lua MiniMap.refresh({}, { lines = false, scrollbar = false })<CR>'
     vim.keymap.set('n', key, rhs)
   end
 end)
@@ -737,7 +809,7 @@ later(function()
   -- By default snippets available at cursor are not shown as candidates in
   -- 'mini.completion' menu. This requires a dedicated in-process LSP server
   -- that will provide them. To have that, uncomment next line (use `gcc`).
-  -- MiniSnippets.start_lsp_server()
+  MiniSnippets.start_lsp_server()
 end)
 
 -- Split and join arguments (regions inside brackets between allowed separators).

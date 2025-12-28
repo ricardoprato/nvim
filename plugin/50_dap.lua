@@ -1,0 +1,139 @@
+-- ┌───────────────────────┐
+-- │ DAP (Debug Adapter)   │
+-- └───────────────────────┘
+--
+-- This file configures nvim-dap for debugging Python (Odoo) and JavaScript/TypeScript.
+-- DAP (Debug Adapter Protocol) provides debugging capabilities in Neovim.
+--
+-- Usage:
+-- - F5: Start/Continue debugging
+-- - F9: Toggle breakpoint
+-- - F10: Step over
+-- - F11: Step into
+-- - F7: Toggle DAP UI
+--
+-- See 'plugin/20_keymaps.lua' for all DAP keybindings.
+
+local later = MiniDeps.later
+
+later(function()
+  MiniDeps.add('mfussenegger/nvim-dap')
+  MiniDeps.add('rcarriga/nvim-dap-ui')
+  MiniDeps.add('nvim-neotest/nvim-nio') -- Required by dapui
+  MiniDeps.add('theHamsta/nvim-dap-virtual-text')
+  MiniDeps.add('mfussenegger/nvim-dap-python')
+  MiniDeps.add('mxsdev/nvim-dap-vscode-js')
+
+  local dap = require('dap')
+  local dapui = require('dapui')
+
+  -- DAP UI setup ===========================================================
+  dapui.setup({
+    layouts = {
+      {
+        elements = {
+          { id = 'scopes',      size = 0.25 },
+          { id = 'breakpoints', size = 0.25 },
+          { id = 'stacks',      size = 0.25 },
+          { id = 'watches',     size = 0.25 },
+        },
+        position = 'right',
+        size = 30,
+      },
+      {
+        elements = {
+          { id = 'repl',    size = 0.5 },
+          { id = 'console', size = 0.5 },
+        },
+        position = 'bottom',
+        size = 8,
+      },
+    },
+    floating = {
+      border = 'rounded',
+      mappings = { close = { 'q', '<Esc>' } },
+    },
+  })
+
+  -- Virtual text setup (show variable values inline) ======================
+  require('nvim-dap-virtual-text').setup()
+
+  -- Auto-open/close DAP UI =================================================
+  dap.listeners.after.event_initialized['dapui_config'] = dapui.open
+  dap.listeners.before.event_terminated['dapui_config'] = dapui.close
+  dap.listeners.before.event_exited['dapui_config'] = dapui.close
+
+  -- DAP signs ==============================================================
+  vim.fn.sign_define('DapBreakpoint', {
+    text = '',
+    texthl = 'DiagnosticSignError',
+    linehl = '',
+    numhl = '',
+  })
+  vim.fn.sign_define('DapStopped', {
+    text = '',
+    texthl = 'DiagnosticSignWarn',
+    linehl = 'Visual',
+    numhl = 'DiagnosticSignWarn',
+  })
+
+  -- Python debugger (for Odoo) =============================================
+  local debugpy_path = vim.fn.stdpath('data') .. '/mason/packages/debugpy/venv/bin/python'
+  require('dap-python').setup(debugpy_path)
+
+  -- JavaScript/TypeScript debugger =========================================
+  require('dap-vscode-js').setup({
+    node_path = 'node',
+    debugger_path = vim.fn.stdpath('data') .. '/mason/packages/js-debug-adapter',
+    adapters = { 'pwa-node', 'pwa-chrome', 'pwa-msedge', 'pwa-extensionHost', 'node-terminal' },
+  })
+
+  -- Helper: Check if Deno project ==========================================
+  local function is_deno_project()
+    local current_file = vim.api.nvim_buf_get_name(0)
+    if current_file == '' then
+      return false
+    end
+    local current_dir = vim.fn.fnamemodify(current_file, ':h')
+    local util = require('lspconfig.util')
+    return util.root_pattern('deno.json', 'deno.jsonc')(current_dir) ~= nil
+  end
+
+  -- JavaScript configurations (Node.js vs Deno) ============================
+  dap.configurations.javascript = {
+    {
+      type = 'pwa-node',
+      request = 'launch',
+      name = 'Launch file (Node.js)',
+      program = '${file}',
+      cwd = '${workspaceFolder}',
+      condition = function()
+        return not is_deno_project()
+      end,
+    },
+    {
+      type = 'pwa-node',
+      request = 'attach',
+      name = 'Attach (Node.js)',
+      processId = require('dap.utils').pick_process,
+      cwd = '${workspaceFolder}',
+      condition = function()
+        return not is_deno_project()
+      end,
+    },
+  }
+
+  -- Share configs across JS/TS filetypes ===================================
+  dap.configurations.typescript = dap.configurations.javascript
+  dap.configurations.typescriptreact = dap.configurations.javascript
+  dap.configurations.javascriptreact = dap.configurations.javascript
+
+  -- Automatically load .vscode/launch.json configurations ==================
+  local load_launchjs = function()
+    local ok, vscode = pcall(require, 'dap.ext.vscode')
+    if ok then
+      vscode.load_launchjs()
+    end
+  end
+  _G.Config.new_autocmd({ 'VimEnter', 'DirChanged' }, nil, load_launchjs, 'Load launch.json')
+end)

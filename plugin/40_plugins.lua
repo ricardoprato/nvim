@@ -9,7 +9,7 @@
 -- Use this file to install and configure other such plugins.
 
 -- Make concise helpers for installing/adding plugins in two stages
-local add, later = MiniDeps.add, MiniDeps.later
+local add, later, now = MiniDeps.add, MiniDeps.later, MiniDeps.now
 local now_if_args = _G.Config.now_if_args
 
 -- Tree-sitter ================================================================
@@ -46,15 +46,15 @@ now_if_args(function()
 
   -- Define languages which will have parsers installed and auto enabled
   local languages = {
-    -- These are already pre-installed with Neovim. Used as an example.
-    'lua',
-    'vimdoc',
-    'markdown',
-    -- Add here more languages with which you want to use tree-sitter
-    -- To see available languages:
-    -- - Execute `:=require('nvim-treesitter').get_available()`
-    -- - Visit 'SUPPORTED_LANGUAGES.md' file at
-    --   https://github.com/nvim-treesitter/nvim-treesitter/blob/main
+    -- Default
+    'lua', 'vimdoc', 'markdown', 'markdown_inline',
+    -- Odoo stack
+    'python', 'xml', 'html', 'css',
+    -- JavaScript frameworks
+    'javascript', 'typescript', 'tsx', 'jsx',
+    -- Additional
+    'bash', 'json', 'yaml', 'toml', 'dockerfile',
+    'gitcommit', 'diff', 'query',
   }
   local isnt_installed = function(lang)
     return #vim.api.nvim_get_runtime_file('parser/' .. lang .. '.*', false) == 0
@@ -69,7 +69,13 @@ now_if_args(function()
       table.insert(filetypes, ft)
     end
   end
-  local ts_start = function(ev) vim.treesitter.start(ev.buf) end
+  local ts_start = function(ev)
+    -- Only start treesitter if parser is available
+    local lang = vim.treesitter.language.get_lang(vim.bo[ev.buf].filetype)
+    if lang and #vim.api.nvim_get_runtime_file('parser/' .. lang .. '.*', false) > 0 then
+      pcall(vim.treesitter.start, ev.buf)
+    end
+  end
   _G.Config.new_autocmd('FileType', filetypes, ts_start, 'Start tree-sitter')
 end)
 
@@ -94,11 +100,21 @@ now_if_args(function()
   -- Use `:h vim.lsp.enable()` to automatically enable language server based on
   -- the rules provided by 'nvim-lspconfig'.
   -- Use `:h vim.lsp.config()` or 'after/lsp/' directory to configure servers.
-  -- Uncomment and tweak the following `vim.lsp.enable()` call to enable servers.
-  -- vim.lsp.enable({
-  --   -- For example, if `lua-language-server` is installed, use `'lua_ls'` entry
-  -- })
+  vim.lsp.enable({
+    'lua_ls',   -- Lua
+    'pyright',  -- Python
+    'odoo_lsp', -- Odoo (Python/XML/JS)
+    'ts_ls',    -- TypeScript/JavaScript
+    'denols',   -- Deno
+    'jsonls',   -- JSON
+    'yamlls',   -- YAML
+    'lemminx',  -- XML (for Odoo)
+  })
 end)
+-- SchemaStore ================================================================
+
+-- SchemaStore provides JSON/YAML schemas for better validation and completion
+later(function() add('b0o/SchemaStore.nvim') end)
 
 -- Formatting =================================================================
 
@@ -116,10 +132,38 @@ later(function()
   -- - `:h conform-options`
   -- - `:h conform-formatters`
   require('conform').setup({
-    -- Map of filetype to formatters
-    -- Make sure that necessary CLI tool is available
-    -- formatters_by_ft = { lua = { 'stylua' } },
+    notify_on_error = false,
+    format_on_save = function(bufnr)
+      -- Don't auto-format if disabled
+      if vim.b[bufnr].disable_autoformat or vim.g.disable_autoformat then
+        return
+      end
+
+      return {
+        timeout_ms = 2000,
+        lsp_format = 'fallback',
+      }
+    end,
+    formatters = {
+      black = {
+        prepend_args = { '--fast' },
+      },
+    },
+    formatters_by_ft = {
+      lua = { 'stylua' },
+      python = { 'isort', 'black' },
+      javascript = { 'prettier', 'deno_fmt', stop_after_first = true },
+      typescript = { 'prettier', 'deno_fmt', stop_after_first = true },
+      javascriptreact = { 'prettier', 'deno_fmt', stop_after_first = true },
+      typescriptreact = { 'prettier', 'deno_fmt', stop_after_first = true },
+      json = { 'prettier', 'deno_fmt', stop_after_first = true },
+      yaml = { 'prettier' },
+      xml = {}, -- Use LSP formatting for XML
+    },
   })
+
+  -- Set formatexpr for gq command
+  vim.o.formatexpr = "v:lua.require'conform'.formatexpr()"
 end)
 
 -- Snippets ===================================================================
@@ -143,20 +187,58 @@ later(function() add('rafamadriz/friendly-snippets') end)
 -- If you need them to work elsewhere, consider using other package managers.
 --
 -- You can use it like so:
--- later(function()
---   add('mason-org/mason.nvim')
---   require('mason').setup()
--- end)
+later(function()
+  add('mason-org/mason.nvim')
+  add('mason-org/mason-lspconfig.nvim')
+  add('WhoIsSethDaniel/mason-tool-installer.nvim')
+
+  require('mason').setup()
+
+  -- Auto-install LSP servers
+  require('mason-lspconfig').setup({
+    ensure_installed = {
+      'lua_ls',
+      'pyright',
+      'ts_ls',
+      'denols',
+      'jsonls',
+      'yamlls',
+      'lemminx', -- XML LSP for Odoo
+    },
+    automatic_installation = true,
+  })
+
+  -- Auto-install formatters and other tools
+  require('mason-tool-installer').setup({
+    ensure_installed = {
+      -- Formatters
+      'stylua', 'black', 'isort', 'prettier',
+    },
+    auto_update = true,
+  })
+end)
 
 -- Beautiful, usable, well maintained color schemes outside of 'mini.nvim' and
 -- have full support of its highlight groups. Use if you don't like 'miniwinter'
 -- enabled in 'plugin/30_mini.lua' or other suggested 'mini.hues' based ones.
--- MiniDeps.now(function()
---   -- Install only those that you need
---   add('sainnhe/everforest')
---   add('Shatur/neovim-ayu')
---   add('ellisonleao/gruvbox.nvim')
---
---   -- Enable only one
---   vim.cmd('color everforest')
--- end)
+
+now(function()
+  add({ source = "catppuccin/nvim", name = "catppuccin" })
+  require("catppuccin").setup({
+    flavour = "auto", -- latte, frappe, macchiato, mocha
+    background = {    -- :h background
+      light = "latte",
+      dark = "mocha",
+    },
+    dim_inactive = {
+      enabled = true,    -- dims the background color of inactive window
+      shade = "dark",
+      percentage = 0.15, -- percentage of the shade to apply to the inactive window
+    },
+    color_overrides = {},
+    custom_highlights = {},
+    default_integrations = true,
+    auto_integrations = true,
+  })
+  vim.cmd.colorscheme "catppuccin"
+end)
