@@ -64,19 +64,17 @@ later(function()
   dap.listeners.before.event_exited['dapui_config'] = dapui.close
 
   -- DAP signs ==============================================================
-  vim.fn.sign_define('DapBreakpoint', {
-    text = '',
-    texthl = 'DiagnosticSignError',
-    linehl = '',
-    numhl = '',
-  })
-  vim.fn.sign_define('DapStopped', {
+  local sign = vim.fn.sign_define
+  sign('DapStopped', {
     text = '',
     texthl = 'DiagnosticSignWarn',
     linehl = 'Visual',
     numhl = 'DiagnosticSignWarn',
   })
 
+  sign("DapBreakpoint", { text = "●", texthl = "DapBreakpoint", linehl = "", numhl = "" })
+  sign("DapBreakpointCondition", { text = "●", texthl = "DapBreakpointCondition", linehl = "", numhl = "" })
+  sign("DapLogPoint", { text = "◆", texthl = "DapLogPoint", linehl = "", numhl = "" })
   -- Python debugger (for Odoo) =============================================
   local debugpy_path = vim.fn.stdpath('data') .. '/mason/packages/debugpy/venv/bin/python'
   require('dap-python').setup(debugpy_path)

@@ -238,7 +238,14 @@ now(function()
     color_overrides = {},
     custom_highlights = {},
     default_integrations = true,
-    auto_integrations = true,
+    integrations = {
+      mason = true,
+      mini = {
+        enabled = true,
+        indentscope_color = "mocha", -- catppuccin color (eg. `lavender`) Default: text
+      },
+      dap = true
+    }
   })
   vim.cmd.colorscheme "catppuccin"
 end)
