@@ -208,9 +208,17 @@ nmap_leader('mt', '<Cmd>lua MiniMap.toggle()<CR>', 'Toggle')
 
 -- o is for 'Other'. Common usage:
 -- - `<Leader>oz` - toggle between "zoomed" and regular view of current buffer
+-- - `<Leader>ofb` / `<Leader>ofg` - toggle format on save for buffer/globally
 nmap_leader('or', '<Cmd>lua MiniMisc.resize_window()<CR>', 'Resize to default width')
 nmap_leader('ot', '<Cmd>lua MiniTrailspace.trim()<CR>', 'Trim trailspace')
 nmap_leader('oz', '<Cmd>lua MiniMisc.zoom()<CR>', 'Zoom toggle')
+
+-- Toggle utilities
+nmap_leader('ofb', '<Cmd>lua require("utils.toggle").format("buffer")<CR>', 'Toggle format (buffer)')
+nmap_leader('ofg', '<Cmd>lua require("utils.toggle").format("global")<CR>', 'Toggle format (global)')
+nmap_leader('odb', '<Cmd>lua require("utils.toggle").diagnostics("buffer")<CR>', 'Toggle diagnostics (buffer)')
+nmap_leader('odg', '<Cmd>lua require("utils.toggle").diagnostics("global")<CR>', 'Toggle diagnostics (global)')
+nmap_leader('oh', '<Cmd>lua require("utils.toggle").inlay_hints()<CR>', 'Toggle inlay hints')
 
 -- s is for 'Session'. Common usage:
 -- - `<Leader>sn` - start new session

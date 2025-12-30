@@ -15,6 +15,10 @@
 -- See 'plugin/20_keymaps.lua' for all DAP keybindings.
 
 local later = MiniDeps.later
+local map = function(mode, lhs, rhs, desc)
+  -- See `:h vim.keymap.set()`
+  vim.keymap.set(mode, lhs, rhs, { desc = desc })
+end
 
 later(function()
   MiniDeps.add('mfussenegger/nvim-dap')
@@ -53,6 +57,14 @@ later(function()
       border = 'rounded',
       mappings = { close = { 'q', '<Esc>' } },
     },
+    mappings = {
+      edit = 'e',
+      expand = { '<CR>', '<2-LeftMouse>' },
+      open = 'o',
+      remove = 'd',
+      repl = 'r',
+      toggle = 't',
+    },
   })
 
   -- Virtual text setup (show variable values inline) ======================
@@ -72,9 +84,11 @@ later(function()
     numhl = 'DiagnosticSignWarn',
   })
 
-  sign("DapBreakpoint", { text = "●", texthl = "DapBreakpoint", linehl = "", numhl = "" })
-  sign("DapBreakpointCondition", { text = "●", texthl = "DapBreakpointCondition", linehl = "", numhl = "" })
+  sign("DapBreakpoint", { text = "", texthl = "DapBreakpoint", linehl = "", numhl = "" })
+  sign("DapBreakpointRejected", { text = "", texthl = "DapBreakpoint", linehl = "", numhl = "" })
+  sign("DapBreakpointCondition", { text = "", texthl = "DapBreakpointCondition", linehl = "", numhl = "" })
   sign("DapLogPoint", { text = "◆", texthl = "DapLogPoint", linehl = "", numhl = "" })
+  sign("DapStopped", { text = "", texthl = "DapLogPoint", linehl = "", numhl = "" })
   -- Python debugger (for Odoo) =============================================
   local debugpy_path = vim.fn.stdpath('data') .. '/mason/packages/debugpy/venv/bin/python'
   require('dap-python').setup(debugpy_path)
@@ -133,5 +147,9 @@ later(function()
       vscode.load_launchjs()
     end
   end
-  _G.Config.new_autocmd({ 'VimEnter', 'DirChanged' }, nil, load_launchjs, 'Load launch.json')
+  _G.Config.new_autocmd({ 'VimEnter', 'FileType', 'BufEnter', 'WinEnter' }, nil, load_launchjs, 'Load launch.json')
+
+  map('v', '<F2>', function ()
+    require('dapui').eval()
+  end, 'Debug: Eval')
 end)

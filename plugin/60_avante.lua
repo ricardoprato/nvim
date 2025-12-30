@@ -12,25 +12,23 @@
 --
 -- See 'plugin/20_keymaps.lua' for all Avante keybindings.
 
-local later = MiniDeps.later
+local later, add = MiniDeps.later, MiniDeps.add
 
 later(function()
   -- Add dependencies first (before avante.nvim)
-  MiniDeps.add('nvim-lua/plenary.nvim')
-  MiniDeps.add('MunifTanjim/nui.nvim')
-  MiniDeps.add('HakonHarnes/img-clip.nvim')
-  MiniDeps.add('MeanderingProgrammer/render-markdown.nvim')
-  MiniDeps.add('zbirenbaum/copilot.lua')
+  add('HakonHarnes/img-clip.nvim')
+  add('MeanderingProgrammer/render-markdown.nvim')
+  add('zbirenbaum/copilot.lua')
 
   -- Add avante.nvim last so dependencies are loaded
-  MiniDeps.add({
+  add({
     source = 'yetone/avante.nvim',
-    -- Build binary components after checkout/update
-    hooks = {
-      post_checkout = function()
-        vim.cmd('!make BUILD_FROM_SOURCE=true')
-      end
+    depends = {
+      'nvim-lua/plenary.nvim',
+      'MunifTanjim/nui.nvim',
     },
+    -- Build binary components after checkout/update
+    hooks = { post_checkout = function() vim.cmd('make') end }
   })
 
   -- Wait for next event loop to ensure plugins are loaded
@@ -63,18 +61,14 @@ later(function()
     end
 
     avante.setup({
-      provider = 'copilot',
-      auto_suggestions_provider = 'copilot',
-      providers = {
-        copilot = {
-          model = 'claude-sonnet-3.5',
-        },
-      },
+      provider = 'claude-code',
+      auto_suggestions_provider = 'claude',
       behaviour = {
         auto_suggestions = true,
         auto_set_highlight_group = true,
         auto_set_keymaps = true,
         auto_apply_diff_after_generation = false,
+        enable_fastapply = true,
       },
     })
   end)
