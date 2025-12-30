@@ -62,9 +62,9 @@ later(function()
 
     avante.setup({
       provider = 'claude-code',
-      auto_suggestions_provider = 'claude',
+      auto_suggestions_provider = 'copilot',
       behaviour = {
-        auto_suggestions = true,
+        auto_suggestions = false,
         auto_set_highlight_group = true,
         auto_set_keymaps = true,
         auto_apply_diff_after_generation = false,
