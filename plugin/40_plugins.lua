@@ -205,7 +205,6 @@ later(function()
       'yamlls',
       'lemminx', -- XML LSP for Odoo
     },
-    automatic_installation = true,
   })
 
   -- Auto-install formatters and other tools
