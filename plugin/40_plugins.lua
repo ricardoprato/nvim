@@ -69,13 +69,7 @@ now_if_args(function()
       table.insert(filetypes, ft)
     end
   end
-  local ts_start = function(ev)
-    -- Only start treesitter if parser is available
-    local lang = vim.treesitter.language.get_lang(vim.bo[ev.buf].filetype)
-    if lang and #vim.api.nvim_get_runtime_file('parser/' .. lang .. '.*', false) > 0 then
-      pcall(vim.treesitter.start, ev.buf)
-    end
-  end
+  local ts_start = function(ev) vim.treesitter.start(ev.buf) end
   _G.Config.new_autocmd('FileType', filetypes, ts_start, 'Start tree-sitter')
 end)
 
@@ -105,6 +99,7 @@ now_if_args(function()
     'pyright',  -- Python
     'odoo_lsp', -- Odoo (Python/XML/JS)
     'ts_ls',    -- TypeScript/JavaScript
+    'eslint',   -- ESLint (React Native/Expo)
     'denols',   -- Deno
     'jsonls',   -- JSON
     'yamlls',   -- YAML
@@ -114,7 +109,7 @@ end)
 -- SchemaStore ================================================================
 
 -- SchemaStore provides JSON/YAML schemas for better validation and completion
-later(function() add('b0o/SchemaStore.nvim') end)
+now_if_args(function() add('b0o/SchemaStore.nvim') end)
 
 -- Formatting =================================================================
 
@@ -200,6 +195,7 @@ later(function()
       'lua_ls',
       'pyright',
       'ts_ls',
+      'eslint',  -- ESLint for React Native/Expo
       'denols',
       'jsonls',
       'yamlls',

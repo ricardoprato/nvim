@@ -1,7 +1,8 @@
 local M = {}
 
--- Guardar el directorio inicial cuando se carga este módulo
-local initial_cwd = vim.fn.getcwd()
+-- Usar el directorio inicial capturado en init.lua (antes de cualquier plugin)
+-- Fallback al cwd actual si por alguna razón no está definido
+local initial_cwd = _G.Config and _G.Config.initial_cwd or vim.fn.getcwd()
 
 -- Ruta del buffer actual
 function M.bufpath()

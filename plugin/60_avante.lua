@@ -62,14 +62,38 @@ later(function()
 
     avante.setup({
       provider = 'claude-code',
-      auto_suggestions_provider = 'copilot',
       behaviour = {
         auto_suggestions = false,
         auto_set_highlight_group = true,
         auto_set_keymaps = true,
-        auto_apply_diff_after_generation = false,
+        enable_cursor_planning_mode = true,
+        enable_claude_text_editor_tool_mode = true,
         enable_fastapply = true,
       },
     })
+
+    -- Workaround for LSP detach error in Avante buffers
+    -- Prevents crash when Avante tries to detach LSP from already-cleaned buffers
+    -- This fixes the "attempt to index local 'buf_state' (a nil value)" error
+    local original_buf_detach = vim.lsp.buf_detach_client
+    vim.lsp.buf_detach_client = function(bufnr, client_id)
+      -- Check if buffer still exists and is valid
+      if not bufnr or not vim.api.nvim_buf_is_valid(bufnr) then
+        return
+      end
+      -- Check if LSP client is still attached
+      local clients = vim.lsp.get_clients({ bufnr = bufnr })
+      local is_attached = false
+      for _, client in ipairs(clients) do
+        if client.id == client_id then
+          is_attached = true
+          break
+        end
+      end
+      -- Only detach if client is actually attached
+      if is_attached then
+        pcall(original_buf_detach, bufnr, client_id)
+      end
+    end
   end)
 end)

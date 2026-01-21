@@ -20,7 +20,7 @@ vim.g.mapleader   = ' '                              -- Use `<Space>` as <Leader
 
 vim.o.mouse       = 'a'                              -- Enable mouse
 vim.o.mousescroll = 'ver:25,hor:6'                   -- Customize mouse scroll
-vim.o.switchbuf   = 'usetab'                         -- Use already opened buffers when switching
+vim.o.switchbuf   = 'usetab,uselast'                 -- Use already opened buffers when switching
 vim.o.undofile    = true                             -- Enable persistent undo
 
 vim.o.shada       = "'100,<50,s10,:1000,/100,@100,h" -- Limit ShaDa file (for startup)
@@ -73,6 +73,7 @@ vim.o.smartindent    = true                  -- Make indenting smart
 vim.o.spelloptions   = 'camel'               -- Treat camelCase word parts as separate words
 vim.o.tabstop        = 2                     -- Show tab as this number of spaces
 vim.o.virtualedit    = 'block'               -- Allow going past end of line in blockwise mode
+vim.o.fileformat     = 'unix'                -- This gives the <EOL> of the current buffer
 
 vim.o.iskeyword      = '@,48-57,_,192-255,-' -- Treat dash as `word` textobject part
 
@@ -100,9 +101,6 @@ _G.Config.new_autocmd('FileType', nil, f, "Proper 'formatoptions'")
 -- a more conservative display while still being useful.
 -- See `:h vim.diagnostic` and `:h vim.diagnostic.config()`.
 local diagnostic_opts = {
-  -- Show signs on top of any other sign, but only for warnings and errors
-  signs = { priority = 9999, severity = { min = 'WARN', max = 'ERROR' } },
-
   -- Show all diagnostics as underline (for their messages type `<Leader>ld`)
   underline = { severity = { min = 'HINT', max = 'ERROR' } },
 
@@ -123,7 +121,7 @@ MiniDeps.later(function() vim.diagnostic.config(diagnostic_opts) end)
 -- Large file handling ========================================================
 
 -- Performance optimizations for large files (useful for Odoo XML/Python files)
-vim.g.large_file_cutoff = 1024 * 100 -- 100KB
+vim.g.large_file_cutoff = 1024 * 500 -- 500KB
 
 _G.Config.new_autocmd('BufReadPre', nil, function(args)
   local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(args.buf))
@@ -139,5 +137,17 @@ _G.Config.new_autocmd('BufReadPre', nil, function(args)
     vim.opt_local.eventignore = 'all'
   end
 end, 'Optimize large files')
+
+_G.Config.new_autocmd('BufWinEnter', nil, function(args)
+  local buftype = vim.api.nvim_get_option_value('buftype', { buf = args.buf })
+  if vim.tbl_contains({ 'help', 'nofile', 'quickfix', 'avante' }, buftype) and vim.fn.maparg('q', 'n') == '' then
+    vim.keymap.set('n', 'q', '<cmd>close<cr>', {
+      desc = 'Close window',
+      buffer = args.buf,
+      silent = true,
+      nowait = true,
+    })
+  end
+end, 'Make q close help, man, quickfix, dap floats')
 
 -- stylua: ignore end

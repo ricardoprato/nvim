@@ -49,18 +49,26 @@ nmap(']p', '<Cmd>exe "put "  . v:register<CR>', 'Paste Below')
 -- This is used to provide 'mini.clue' with extra clues.
 -- Add an entry if you create a new group.
 _G.Config.leader_group_clues = {
-  { mode = 'n', keys = '<Leader>b', desc = '+Buffer' },
-  { mode = 'n', keys = '<Leader>e', desc = '+Explore/Edit' },
-  { mode = 'n', keys = '<Leader>f', desc = '+Find' },
-  { mode = 'n', keys = '<Leader>g', desc = '+Git' },
-  { mode = 'n', keys = '<Leader>l', desc = '+Language' },
-  { mode = 'n', keys = '<Leader>m', desc = '+Map' },
-  { mode = 'n', keys = '<Leader>o', desc = '+Other' },
-  { mode = 'n', keys = '<Leader>s', desc = '+Session' },
-  { mode = 'n', keys = '<Leader>t', desc = '+Terminal' },
-  { mode = 'n', keys = '<Leader>v', desc = '+Visits' },
-  { mode = 'x', keys = '<Leader>g', desc = '+Git' },
-  { mode = 'x', keys = '<Leader>l', desc = '+Language' },
+  { mode = 'n', keys = '<Leader>b',  desc = '+Buffer' },
+  { mode = 'n', keys = '<Leader>d',  desc = '+Debug' },
+  { mode = 'n', keys = '<Leader>e',  desc = '+Explore/Edit' },
+  { mode = 'n', keys = '<Leader>f',  desc = '+Find' },
+  { mode = 'n', keys = '<Leader>ff', desc = '+Files' },
+  { mode = 'n', keys = '<Leader>fg', desc = '+Grep' },
+  { mode = 'n', keys = '<Leader>g',  desc = '+Git' },
+  { mode = 'n', keys = '<Leader>gc', desc = '+Conflict' },
+  { mode = 'n', keys = '<Leader>gf', desc = '+Flow' },
+  { mode = 'n', keys = '<Leader>gr', desc = '+Release' },
+  { mode = 'n', keys = '<Leader>gh', desc = '+Hotfix/Hunks' },
+  { mode = 'n', keys = '<Leader>gb', desc = '+Bugfix' },
+  { mode = 'n', keys = '<Leader>l',  desc = '+Language' },
+  { mode = 'n', keys = '<Leader>m',  desc = '+Map' },
+  { mode = 'n', keys = '<Leader>o',  desc = '+Other' },
+  { mode = 'n', keys = '<Leader>s',  desc = '+Session' },
+  { mode = 'n', keys = '<Leader>t',  desc = '+Terminal' },
+  { mode = 'n', keys = '<Leader>v',  desc = '+Visits' },
+  { mode = 'x', keys = '<Leader>g',  desc = '+Git' },
+  { mode = 'x', keys = '<Leader>l',  desc = '+Language' },
 }
 
 -- Helpers for a more concise `<Leader>` mappings.
@@ -74,6 +82,8 @@ end
 local xmap_leader = function(suffix, rhs, desc)
   vim.keymap.set('x', '<Leader>' .. suffix, rhs, { desc = desc })
 end
+
+nmap('<Esc>', '<Cmd>nohlsearch<CR>', 'Clear search highlight')
 
 -- b is for 'Buffer'. Common usage:
 -- - `<Leader>bs` - create scratch (temporary) buffer
@@ -89,6 +99,7 @@ nmap_leader('bD', '<Cmd>lua MiniBufremove.delete(0, true)<CR>', 'Delete!')
 nmap_leader('bs', new_scratch_buffer, 'Scratch')
 nmap_leader('bw', '<Cmd>lua MiniBufremove.wipeout()<CR>', 'Wipeout')
 nmap_leader('bW', '<Cmd>lua MiniBufremove.wipeout(0, true)<CR>', 'Wipeout!')
+nmap_leader('bo', '<Cmd>%bd|e#<CR>', 'Delete all!')
 
 -- e is for 'Explore' and 'Edit'. Common usage:
 -- - `<Leader>ed` - open explorer at current working directory
@@ -126,6 +137,7 @@ nmap_leader('eq', explore_quickfix, 'Quickfix')
 -- All these use 'mini.pick'. See `:h MiniPick-overview` for an overview.
 local pick_added_hunks_buf = '<Cmd>Pick git_hunks path="%" scope="staged"<CR>'
 local pick_workspace_symbols_live = '<Cmd>Pick lsp scope="workspace_symbol_live"<CR>'
+local pick_utils = require('utils.pick-utils')
 
 nmap_leader('f/', '<Cmd>Pick history scope="/"<CR>', '"/" history')
 nmap_leader('f:', '<Cmd>Pick history scope=":"<CR>', '":" history')
@@ -136,11 +148,11 @@ nmap_leader('fc', '<Cmd>Pick git_commits<CR>', 'Commits (all)')
 nmap_leader('fC', '<Cmd>Pick git_commits path="%"<CR>', 'Commits (buf)')
 nmap_leader('fd', '<Cmd>Pick diagnostic scope="all"<CR>', 'Diagnostic workspace')
 nmap_leader('fD', '<Cmd>Pick diagnostic scope="current"<CR>', 'Diagnostic buffer')
-nmap_leader('ffp', function() require('utils.pick-utils').project_files() end, 'Files (project)')
-nmap_leader('ffw', function() require('utils.pick-utils').global_files() end, 'Files (workspace)')
-nmap_leader('fgp', function() require('utils.pick-utils').project_grep() end, 'Grep (project)')
-nmap_leader('fgw', function() require('utils.pick-utils').global_grep() end, 'Grep (workspace)')
-nmap_leader('fG', '<Cmd>Pick grep pattern="<cword>"<CR>', 'Grep current word')
+nmap_leader('fF', '<Cmd>Pick files<CR>', 'Files (local)')
+nmap_leader('fG', '<Cmd>Pick grep_live<CR>', 'Grep live (local)')
+nmap_leader('ff', pick_utils.global_files, 'Files (global)')
+nmap_leader('fg', pick_utils.global_grep, 'Grep live (global)')
+nmap_leader('fw', '<Cmd>Pick grep pattern="<cword>"<CR>', 'Grep current word')
 nmap_leader('fh', '<Cmd>Pick help<CR>', 'Help tags')
 nmap_leader('fH', '<Cmd>Pick hl_groups<CR>', 'Highlight groups')
 nmap_leader('fl', '<Cmd>Pick buf_lines scope="all"<CR>', 'Lines (all)')
@@ -172,8 +184,39 @@ nmap_leader('gl', '<Cmd>' .. git_log_cmd .. '<CR>', 'Log')
 nmap_leader('gL', '<Cmd>' .. git_log_buf_cmd .. '<CR>', 'Log buffer')
 nmap_leader('go', '<Cmd>lua MiniDiff.toggle_overlay()<CR>', 'Toggle overlay')
 nmap_leader('gs', '<Cmd>lua MiniGit.show_at_cursor()<CR>', 'Show at cursor')
+nmap_leader('gP', '<Cmd>Git push<CR>', 'Git push')
+nmap_leader('gp', '<Cmd>Git pull --rebase<CR>', 'Git pull')
+nmap_leader('gb', '<Cmd>vertical Git blame -- %<CR>', 'Git blame')
+nmap_leader('gB', '<Cmd>Pick git_branches<CR>', 'Git branches')
+nmap_leader('g-', '<Cmd>Git checkout -<CR>', 'Git checkout -')
 
 xmap_leader('gs', '<Cmd>lua MiniGit.show_at_cursor()<CR>', 'Show at selection')
+
+-- Git Flow integration
+-- gf - Feature operations
+nmap_leader('gffs', '<Cmd>GitFlow feature start<CR>', 'Feature: Start')
+nmap_leader('gfff', '<Cmd>GitFlow feature finish<CR>', 'Feature: Finish')
+
+-- gr - Release operations
+nmap_leader('gfrs', '<Cmd>GitFlow release start<CR>', 'Release: Start')
+nmap_leader('gfrf', '<Cmd>GitFlow release finish<CR>', 'Release: Finish')
+
+-- gh - Hotfix operations
+nmap_leader('gfhs', '<Cmd>GitFlow hotfix start<CR>', 'Hotfix: Start')
+nmap_leader('gfhf', '<Cmd>GitFlow hotfix finish<CR>', 'Hotfix: Finish')
+
+-- gb - Bugfix operations
+nmap_leader('gfbs', '<Cmd>GitFlow bugfix start<CR>', 'Bugfix: Start')
+nmap_leader('gfbf', '<Cmd>GitFlow bugfix finish<CR>', 'Bugfix: Finish')
+
+-- Git Conflict resolution
+-- Navigate and resolve merge conflicts
+nmap(']x', '<Cmd>lua require("utils.git-conflict").next_conflict()<CR>', 'Next conflict')
+nmap('[x', '<Cmd>lua require("utils.git-conflict").prev_conflict()<CR>', 'Prev conflict')
+nmap_leader('gco', '<Cmd>lua require("utils.git-conflict").choose_ours()<CR>', 'Conflict: Ours')
+nmap_leader('gct', '<Cmd>lua require("utils.git-conflict").choose_theirs()<CR>', 'Conflict: Theirs')
+nmap_leader('gcb', '<Cmd>lua require("utils.git-conflict").choose_both()<CR>', 'Conflict: Both')
+nmap_leader('gcl', '<Cmd>lua require("utils.git-conflict").list_conflicts()<CR>', 'Conflict: List all')
 
 -- l is for 'Language'. Common usage:
 -- - `<Leader>ld` - show more diagnostic details in a floating window
@@ -234,6 +277,17 @@ nmap_leader('sw', '<Cmd>lua MiniSessions.write()<CR>', 'Write current')
 -- t is for 'Terminal'
 nmap_leader('tT', '<Cmd>horizontal term<CR>', 'Terminal (horizontal)')
 nmap_leader('tt', '<Cmd>vertical term<CR>', 'Terminal (vertical)')
+nmap_leader('tf', '<Cmd>lua require("utils.float-term").shell()<CR>', 'Terminal (float)')
+nmap_leader('tg', '<Cmd>lua require("utils.float-term").lazygit()<CR>', 'Lazygit')
+nmap_leader('td', '<Cmd>lua require("utils.float-term").lazydocker()<CR>', 'Lazydocker')
+
+local map = vim.keymap.set
+-- [[ Terminal Window Navigation ]]
+map('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
+map('t', '<C-h>', '<C-\\><C-N><C-w>h', { desc = 'Move to left window (Terminal)' })
+map('t', '<C-j>', '<C-\\><C-N><C-w>j', { desc = 'Move to lower window (Terminal)' })
+map('t', '<C-k>', '<C-\\><C-N><C-w>k', { desc = 'Move to upper window (Terminal)' })
+map('t', '<C-l>', '<C-\\><C-N><C-w>l', { desc = 'Move to right window (Terminal)' })
 
 -- v is for 'Visits'. Common usage:
 -- - `<Leader>vv` - add    "core" label to current file.

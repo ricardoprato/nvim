@@ -152,6 +152,8 @@ now(function() require('mini.starter').setup() end)
 -- See also:
 -- - `:h MiniStatusline-example-content` - example of default content. Use it to
 --   configure a custom statusline by setting `config.content.active` function.
+-- Git info (branch, ahead/behind, conflicts) is shown via minigit_summary_string
+-- which is formatted in the mini.git setup below to include all this info.
 now(function() require('mini.statusline').setup() end)
 
 -- Tabline. Sets `:h 'tabline'` to show all listed buffers in a line at the top.
@@ -474,7 +476,88 @@ end)
 -- - `:h MiniGit-examples` - examples of common setups
 -- - `:h :Git` - more details about `:Git` user command
 -- - `:h MiniGit.show_at_cursor()` - what information at cursor is shown
-later(function() require('mini.git').setup() end)
+later(
+  function()
+    require('mini.git').setup()
+
+    -- Format git summary string to include:
+    -- - Branch name
+    -- - Ahead/behind remote (↑N ↓M)
+    -- - In-progress actions (merge, rebase, etc.)
+    -- - Conflict count in current buffer (⚠N)
+    local format_summary = function(data)
+      local summary = vim.b[data.buf].minigit_summary
+      if not summary then return end
+
+      local parts = {}
+
+      -- Branch name
+      if summary.head_name then
+        table.insert(parts, summary.head_name)
+      end
+
+      -- Ahead/behind from remote
+      local git_utils = require('utils.git')
+      local status = git_utils.get_ahead_behind()
+      if status.ahead > 0 then
+        table.insert(parts, '↑' .. status.ahead)
+      end
+      if status.behind > 0 then
+        table.insert(parts, '↓' .. status.behind)
+      end
+
+      -- In-progress actions (merge, rebase, cherry-pick, etc.)
+      if summary.in_progress and summary.in_progress ~= '' then
+        table.insert(parts, '[' .. summary.in_progress .. ']')
+      end
+
+      -- Conflict count in current buffer
+      local conflicts = git_utils.count_conflicts(data.buf)
+      if conflicts > 0 then
+        table.insert(parts, '⚠' .. conflicts)
+      end
+
+      -- status
+      if summary.status then
+        table.insert(parts, summary.status)
+      end
+
+
+      vim.b[data.buf].minigit_summary_string = table.concat(parts, ' ')
+    end
+
+    _G.Config.new_autocmd('User', 'MiniGitUpdated', format_summary, 'Format git summary with ahead/behind')
+
+    -- Invalidate ahead/behind cache on git updates and refresh status
+    _G.Config.new_autocmd('User', 'MiniGitUpdated', function()
+      require('utils.git').invalidate_cache()
+    end, 'Invalidate git status cache')
+
+    -- Start auto-fetch when entering a git repo (runs every 5 minutes)
+    -- Initial fetch happens immediately to show accurate ahead/behind
+    _G.Config.new_autocmd('User', 'MiniGitUpdated', function()
+      local git = require('utils.git')
+      -- Only start if not already running
+      if not git._fetch_timer then
+        git.start_auto_fetch(1)
+      end
+    end, 'Start background git fetch')
+
+    local align_blame = function(au_data)
+      if au_data.data.git_subcommand ~= 'blame' then return end
+
+      local win_src = au_data.data.win_source
+      vim.wo.wrap = false
+      vim.fn.winrestview({ topline = vim.fn.line('w0', win_src) })
+      vim.api.nvim_win_set_cursor(0, { vim.fn.line('.', win_src), 0 })
+
+      -- Bind both windows so that they scroll together
+      vim.wo[win_src].scrollbind, vim.wo.scrollbind = true, true
+    end
+
+    _G.Config.new_autocmd('User', 'MiniGitCommandSplit', align_blame, 'Align blame output with source')
+  end
+)
 
 -- Highlight patterns in text. Like `TODO`/`NOTE` or color hex codes.
 -- Example usage:
@@ -483,12 +566,9 @@ later(function() require('mini.git').setup() end)
 -- See also:
 -- - `:h MiniHipatterns-examples` - examples of common setups
 -- Limpiar cache de Tailwind cuando cambia el colorscheme
-vim.api.nvim_create_autocmd("ColorScheme", {
-  callback = function()
-    require('utils.tailwind-colors').reset_cache()
-  end,
-  desc = "Reset Tailwind highlight cache on colorscheme change",
-})
+_G.Config.new_autocmd('ColorScheme', '*', function()
+  require('utils.tailwind-colors').reset_cache()
+end, 'Reset Tailwind highlight cache on colorscheme change')
 
 later(function()
   local hipatterns = require('mini.hipatterns')
@@ -741,7 +821,13 @@ end)
 -- - `:h MiniPick.builtin` and `:h MiniExtra.pickers` - available pickers;
 --   Execute one either with Lua function, `:Pick <picker-name>` command, or
 --   one of `<Leader>f` mappings defined in 'plugin/20_keymaps.lua'
-later(function() require('mini.pick').setup() end)
+later(function()
+  require('mini.pick').setup()
+
+  -- Register custom pickers from pick-utils
+  local pick_utils = require 'utils.pick-utils'
+  MiniPick.registry.multi_grep = pick_utils.multi_grep
+end)
 
 -- Manage and expand snippets (templates for a frequently used text).
 -- Typical workflow is to type snippet's (configurable) prefix and expand it
@@ -872,3 +958,4 @@ later(function() require('mini.visits').setup() end)
 -- - 'mini.doc' - needed only for plugin developers.
 -- - 'mini.fuzzy' - not really needed on a daily basis.
 -- - 'mini.test' - needed only for plugin developers.
+

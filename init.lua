@@ -68,6 +68,10 @@ require('mini.deps').setup()
 -- Define config table to be able to pass data between scripts
 _G.Config = {}
 
+-- Capture the initial working directory BEFORE any plugin can change it
+-- This is used by utils.root for global_root()
+_G.Config.initial_cwd = vim.fn.getcwd()
+
 -- Define custom autocommand group and helper to create an autocommand.
 -- Autocommands are Neovim's way to define actions that are executed on events
 -- (like creating a buffer, setting an option, etc.).

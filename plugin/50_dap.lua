@@ -77,18 +77,11 @@ later(function()
 
   -- DAP signs ==============================================================
   local sign = vim.fn.sign_define
-  sign('DapStopped', {
-    text = '',
-    texthl = 'DiagnosticSignWarn',
-    linehl = 'Visual',
-    numhl = 'DiagnosticSignWarn',
-  })
-
   sign("DapBreakpoint", { text = "", texthl = "DapBreakpoint", linehl = "", numhl = "" })
   sign("DapBreakpointRejected", { text = "", texthl = "DapBreakpoint", linehl = "", numhl = "" })
   sign("DapBreakpointCondition", { text = "", texthl = "DapBreakpointCondition", linehl = "", numhl = "" })
   sign("DapLogPoint", { text = "◆", texthl = "DapLogPoint", linehl = "", numhl = "" })
-  sign("DapStopped", { text = "", texthl = "DapLogPoint", linehl = "", numhl = "" })
+  sign("DapStopped", { text = "", texthl = "DiagnosticSignWarn", linehl = "Visual", numhl = "DiagnosticSignWarn" })
   -- Python debugger (for Odoo) =============================================
   local debugpy_path = vim.fn.stdpath('data') .. '/mason/packages/debugpy/venv/bin/python'
   require('dap-python').setup(debugpy_path)
@@ -135,6 +128,55 @@ later(function()
     },
   }
 
+  -- React Native/Expo configurations ========================================
+  -- Helper: Check if React Native project
+  local function is_react_native_project()
+    local current_file = vim.api.nvim_buf_get_name(0)
+    if current_file == '' then return false end
+    local current_dir = vim.fn.fnamemodify(current_file, ':h')
+    local util = require('lspconfig.util')
+    return util.root_pattern('app.json', 'app.config.js', 'app.config.ts', 'metro.config.js')(current_dir) ~= nil
+  end
+
+  -- React Native specific debug configurations
+  local react_native_configs = {
+    {
+      type = 'pwa-node',
+      request = 'attach',
+      name = 'Attach to React Native (Hermes)',
+      port = 8081,
+      cwd = '${workspaceFolder}',
+      sourceMaps = true,
+      protocol = 'inspector',
+      localRoot = '${workspaceFolder}',
+      remoteRoot = '${workspaceFolder}',
+    },
+    {
+      type = 'pwa-node',
+      request = 'attach',
+      name = 'Attach to Expo (Metro)',
+      port = 19000,
+      cwd = '${workspaceFolder}',
+      sourceMaps = true,
+      protocol = 'inspector',
+      localRoot = '${workspaceFolder}',
+      remoteRoot = '${workspaceFolder}',
+    },
+    {
+      type = 'pwa-chrome',
+      request = 'launch',
+      name = 'Debug in Chrome (Expo Web)',
+      url = 'http://localhost:19006',
+      webRoot = '${workspaceFolder}',
+      sourceMaps = true,
+    },
+  }
+
+  -- Merge React Native configs with existing JS configs
+  for _, config in ipairs(react_native_configs) do
+    table.insert(dap.configurations.javascript, config)
+  end
+
   -- Share configs across JS/TS filetypes ===================================
   dap.configurations.typescript = dap.configurations.javascript
   dap.configurations.typescriptreact = dap.configurations.javascript
@@ -149,91 +191,40 @@ later(function()
   end
   _G.Config.new_autocmd({ 'VimEnter', 'FileType', 'BufEnter', 'WinEnter' }, nil, load_launchjs, 'Load launch.json')
 
-  map('v', '<F2>', function ()
-    require('dapui').eval()
-  end, 'Debug: Evaluate Input')
-  map('n', '<F5>', function ()
-    require('dap').continue()
-  end, 'Debug: Start/Continue')
-  map('n', '<S-F5>', function ()
-    require('dap').terminate()
-  end, 'Debug: Stop')
-  map('n', '<C-F5>', function ()
-    require('dap').restart_frame()
-  end, 'Debug: Restart')
-  map('n', '<F6>', function ()
-    require('dap').pause()
-  end, 'Debug: Pause')
-  map('n', '<F7>', function ()
-    require('dapui').toggle()
-  end, 'Debug: Toggle Debug UI')
-  map('n', '<F9>', function ()
-    require('dap').toggle_breakpoint()
-  end, 'Debug: Toggle Breakpoint')
-  map('n', '<S-F9>', function ()
-    require('dap').set_breakpoint(vim.fn.input 'Breakpoint condition: ')
-  end, 'Debug: Set Breakpoint')
-  map('n', '<F10>', function ()
-    require('dap').step_over()
-  end, 'Debug: Step Over')
-  map('n', '<F11>', function ()
-    require('dap').step_into()
-  end, 'Debug: Step Into')
-  map('n', '<S-F11>', function ()
-    require('dap').step_out()
-  end, 'Debug: Step Out')
-  map('n', '<leader>du', function ()
-    require('dapui').toggle()
-  end, 'Debug: Toggle Debug UI (F7)')
-  map('n', '<leader>dh', function ()
-    require('dap.ui.widgets').hover()
-  end, 'Debug: Hover')
-  map('n', '<leader>de', function ()
-    require('dapui').eval()
-  end, 'Debug: Evaluate Input (F2)')
-  map('n', '<leader>de', function ()
-    require('dap').set_exception_breakpoints()
-  end, 'Debug: Set Exception Breakpoints')
-  map('n', '<leader>da', function ()
-    require('dap').set_exception_breakpoints()
-  end, 'Debug: Set Exception Breakpoints')
-  map('n', '<leader>dc', function ()
-    require('dap').continue()
-  end, 'Debug: Start/Continue (F5)')
-  map('n', '<leader>dQ', function ()
-    require('dap').terminate()
-  end, 'Debug: Stop (<S-F5>)')
-  map('n', '<leader>dQ', function ()
-    require('dap').terminate()
-  end, 'Debug: Stop (<S-F5>)')
-  map('n', '<leader>dr', function ()
-    require('dap').restart()
-  end, 'Debug: Restart (<C-F5>)')
-  map('n', '<leader>dp', function ()
-    require('dap').pause()
-  end, 'Debug: Pause (<F6>)')
-  map('n', '<leader>dR', function ()
-    require('dap').repl.toggle()
-  end, 'Debug: Toggle REPL')
-  map('n', '<leader>ds', function ()
-    require('dap').run_to_cursor()
-  end, 'Debug: Run to Cursor')
-  map('n', '<leader>dB', function ()
-    require('dap').clear_breakpoints()
-  end, 'Debug: Clear Breakpoints')
-  map('n', '<leader>db', function ()
-    require('dap').toggle_breakpoint()
-  end, 'Debug: Toggle Breakpoint (F9)')
-  map('n', '<leader>dC', function ()
-    require('dap').set_breakpoint(vim.fn.input 'Breakpoint condition: ')
-  end, 'Debug: Set Conditional Breakpoint (<S-F9>)')
-  map('n', '<leader>do', function ()
-    require('dap').step_over()
-  end, 'Debug: Step Over (F10)')
-  map('n', '<leader>di', function ()
-    require('dap').step_into()
-  end, 'Debug: Step Into (F11)')
-  map('n', '<leader>dO', function ()
-    require('dap').step_out()
-  end, 'Debug: Step Out (<S-F11>)')
+  -- DAP Keymaps (declarative) ================================================
+  local keymaps = {
+    -- Function keys
+    { 'v', '<F2>',       dapui.eval,                                                     'Evaluate Input' },
+    { 'n', '<F5>',       dap.continue,                                                   'Start/Continue' },
+    { 'n', '<S-F5>',     dap.terminate,                                                  'Stop' },
+    { 'n', '<C-F5>',     dap.restart_frame,                                              'Restart' },
+    { 'n', '<F6>',       dap.pause,                                                      'Pause' },
+    { 'n', '<F7>',       dapui.toggle,                                                   'Toggle UI' },
+    { 'n', '<F9>',       dap.toggle_breakpoint,                                          'Toggle Breakpoint' },
+    { 'n', '<S-F9>',     function() dap.set_breakpoint(vim.fn.input('Condition: ')) end, 'Conditional Breakpoint' },
+    { 'n', '<F10>',      dap.step_over,                                                  'Step Over' },
+    { 'n', '<F11>',      dap.step_into,                                                  'Step Into' },
+    { 'n', '<S-F11>',    dap.step_out,                                                   'Step Out' },
+    -- Leader keys
+    { 'n', '<leader>du', dapui.toggle,                                                   'Toggle UI (F7)' },
+    { 'n', '<leader>dh', function() require('dap.ui.widgets').hover() end,               'Hover' },
+    { 'n', '<leader>de', dapui.eval,                                                     'Evaluate (F2)' },
+    { 'n', '<leader>da', dap.set_exception_breakpoints,                                  'Exception Breakpoints' },
+    { 'n', '<leader>dc', dap.continue,                                                   'Continue (F5)' },
+    { 'n', '<leader>dQ', dap.terminate,                                                  'Stop (S-F5)' },
+    { 'n', '<leader>dr', dap.restart,                                                    'Restart (C-F5)' },
+    { 'n', '<leader>dp', dap.pause,                                                      'Pause (F6)' },
+    { 'n', '<leader>dR', dap.repl.toggle,                                                'Toggle REPL' },
+    { 'n', '<leader>ds', dap.run_to_cursor,                                              'Run to Cursor' },
+    { 'n', '<leader>dB', dap.clear_breakpoints,                                          'Clear Breakpoints' },
+    { 'n', '<leader>db', dap.toggle_breakpoint,                                          'Toggle Breakpoint (F9)' },
+    { 'n', '<leader>dC', function() dap.set_breakpoint(vim.fn.input('Condition: ')) end, 'Conditional Breakpoint (S-F9)' },
+    { 'n', '<leader>do', dap.step_over,                                                  'Step Over (F10)' },
+    { 'n', '<leader>di', dap.step_into,                                                  'Step Into (F11)' },
+    { 'n', '<leader>dO', dap.step_out,                                                   'Step Out (S-F11)' },
+  }
+
+  for _, km in ipairs(keymaps) do
+    map(km[1], km[2], km[3], 'Debug: ' .. km[4])
+  end
 end)
