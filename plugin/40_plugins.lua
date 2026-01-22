@@ -195,7 +195,7 @@ later(function()
       'lua_ls',
       'pyright',
       'ts_ls',
-      'eslint',  -- ESLint for React Native/Expo
+      'eslint', -- ESLint for React Native/Expo
       'denols',
       'jsonls',
       'yamlls',
@@ -243,4 +243,109 @@ now(function()
     }
   })
   vim.cmd.colorscheme "catppuccin"
+end)
+
+-- Completion =================================================================
+
+-- blink.cmp - async completion with fuzzy matching powered by Rust
+-- Replaces mini.completion for better performance and more features
+later(function()
+  local function build_blink(params)
+    vim.notify('Building blink.cmp', vim.log.levels.INFO)
+    local obj = vim.system({ 'cargo', 'build', '--release' }, { cwd = params.path }):wait()
+    if obj.code == 0 then
+      vim.notify('Building blink.cmp done', vim.log.levels.INFO)
+    else
+      vim.notify('Building blink.cmp failed', vim.log.levels.ERROR)
+    end
+  end
+  add({
+    source = 'saghen/blink.cmp',
+    depends = { 'rafamadriz/friendly-snippets' },
+    hooks = {
+      post_install = build_blink,
+      post_checkout = build_blink,
+    },
+  })
+
+  require('blink.cmp').setup({
+    -- appearance = {
+    --   nerd_font_variant = 'mono',
+    -- },
+    --
+    -- completion = {
+    --   menu = {
+    --     auto_show = true,
+    --     draw = {
+    --       columns = { { 'kind_icon' }, { 'label', gap = 1 } },
+    --     },
+    --   },
+    -- },
+    --
+    -- sources = {
+    --   default = { 'lsp', 'path', 'snippets', 'buffer' },
+    -- },
+    --
+    -- cmdline = { enabled = false },
+
+    snippets = { preset = 'mini_snippets' },
+
+    -- signature = { enabled = false },
+  })
+
+  -- Advertise blink.cmp capabilities to LSP servers
+  vim.lsp.config('*', { capabilities = require('blink.cmp').get_lsp_capabilities() })
+end)
+
+-- Obsidian ==================================================================
+
+-- obsidian.nvim - Note-taking with Obsidian integration
+later(function()
+  add({
+    source = 'obsidian-nvim/obsidian.nvim',
+    depends = { 'nvim-lua/plenary.nvim' },
+  })
+
+  require('obsidian').setup({
+    workspaces = {
+      {
+        name = 'personal',
+        path = '~/obsidian',
+      },
+    },
+
+    -- notes_subdir = 'notes',
+    -- daily_notes = {
+    --   folder = 'daily',
+    --   date_format = '%Y-%m-%d',
+    --   template = 'daily.md',
+    -- },
+    --
+    -- completion = {
+    --   nvim_cmp = false,
+    --   min_chars = 2,
+    -- },
+    --
+    -- new_notes_location = 'notes_subdir',
+    --
+    -- templates = {
+    --   folder = 'templates',
+    --   date_format = '%Y-%m-%d',
+    --   time_format = '%H:%M',
+    -- },
+    --
+    -- picker = {
+    --   name = 'mini.pick',
+    -- },
+    --
+    -- ui = {
+    --   enable = true,
+    -- },
+    --
+    -- attachments = {
+    --   folder = 'assets/imgs',
+    -- },
+    --
+    legacy_commands = false,
+  })
 end)

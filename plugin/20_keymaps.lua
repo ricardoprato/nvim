@@ -63,6 +63,7 @@ _G.Config.leader_group_clues = {
   { mode = 'n', keys = '<Leader>gb', desc = '+Bugfix' },
   { mode = 'n', keys = '<Leader>l',  desc = '+Language' },
   { mode = 'n', keys = '<Leader>m',  desc = '+Map' },
+  { mode = 'n', keys = '<Leader>n',  desc = '+Notes (Obsidian)' },
   { mode = 'n', keys = '<Leader>o',  desc = '+Other' },
   { mode = 'n', keys = '<Leader>s',  desc = '+Session' },
   { mode = 'n', keys = '<Leader>t',  desc = '+Terminal' },
@@ -307,3 +308,17 @@ nmap_leader('vv', '<Cmd>lua MiniVisits.add_label("core")<CR>', 'Add "core" label
 nmap_leader('vV', '<Cmd>lua MiniVisits.remove_label("core")<CR>', 'Remove "core" label')
 nmap_leader('vl', '<Cmd>lua MiniVisits.add_label()<CR>', 'Add label')
 nmap_leader('vL', '<Cmd>lua MiniVisits.remove_label()<CR>', 'Remove label')
+
+-- n is for 'Notes' (Obsidian). Common usage:
+-- - `<Leader>nn` - create a new note
+-- - `<Leader>nd` - open today's daily note
+-- - `<Leader>ns` - search notes
+nmap_leader('nn', '<Cmd>Obsidian new<CR>', 'New note')
+nmap_leader('no', '<Cmd>Obsidian open<CR>', 'Open in app')
+nmap_leader('ns', '<Cmd>Obsidian search<CR>', 'Search')
+nmap_leader('nd', '<Cmd>Obsidian today<CR>', 'Daily note')
+nmap_leader('ny', '<Cmd>Obsidian yesterday<CR>', 'Yesterday')
+nmap_leader('nm', '<Cmd>Obsidian tomorrow<CR>', 'Tomorrow')
+nmap_leader('nb', '<Cmd>Obsidian backlinks<CR>', 'Backlinks')
+nmap_leader('nl', '<Cmd>Obsidian links<CR>', 'Links')
+nmap_leader('nt', '<Cmd>Obsidian template<CR>', 'Template')
