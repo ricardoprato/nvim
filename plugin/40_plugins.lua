@@ -349,3 +349,11 @@ later(function()
     legacy_commands = false,
   })
 end)
+
+-- Vim Sleuth ==================================================================
+
+-- vim-sleuth - Automatic 'shiftwidth' and 'expandtab'
+
+now_if_args(function()
+  add({ source = 'tpope/vim-sleuth' })
+end)
