@@ -128,7 +128,25 @@ now(function() require('mini.notify').setup() end)
 -- - `<Leader>sn` - start new session
 -- - `<Leader>sr` - read previously started session
 -- - `<Leader>sd` - delete previously started session
-now(function() require('mini.sessions').setup() end)
+now(function()
+  require('mini.sessions').setup({
+    directory = vim.fn.stdpath('data') .. '/sessions',
+    autowrite = true,
+    hooks = {
+      pre = {
+        write = function()
+          -- Cerrar buffers temporales antes de guardar sesión
+          for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+            local bt = vim.bo[buf].buftype
+            if bt == 'terminal' or bt == 'nofile' then
+              pcall(vim.api.nvim_buf_delete, buf, { force = true })
+            end
+          end
+        end,
+      },
+    },
+  })
+end)
 
 -- Start screen. This is what is shown when you open Neovim like `nvim`.
 -- Example usage:
@@ -488,15 +506,24 @@ later(
     end, 'Start background git fetch')
 
     local align_blame = function(au_data)
-      if au_data.data.git_subcommand ~= 'blame' then return end
+      -- Only proceed if this is a blame command
+      if not au_data.data or au_data.data.git_subcommand ~= 'blame' then return end
 
       local win_src = au_data.data.win_source
-      vim.wo.wrap = false
+      -- Verify we have a valid source window
+      if not win_src or not vim.api.nvim_win_is_valid(win_src) then return end
+
+      -- Get the current window (should be the git split window)
+      local win_git = vim.api.nvim_get_current_win()
+
+      -- Configure the git blame window
+      vim.wo[win_git].wrap = false
       vim.fn.winrestview({ topline = vim.fn.line('w0', win_src) })
-      vim.api.nvim_win_set_cursor(0, { vim.fn.line('.', win_src), 0 })
+      vim.api.nvim_win_set_cursor(win_git, { vim.fn.line('.', win_src), 0 })
 
       -- Bind both windows so that they scroll together
-      vim.wo[win_src].scrollbind, vim.wo.scrollbind = true, true
+      vim.wo[win_src].scrollbind = true
+      vim.wo[win_git].scrollbind = true
     end
 
     _G.Config.new_autocmd('User', 'MiniGitCommandSplit', align_blame, 'Align blame output with source')
@@ -537,8 +564,7 @@ later(function()
           local allowed = {
             "html", "css", "scss", "less",
             "javascript", "javascriptreact", "typescript", "typescriptreact",
-            "vue", "svelte",
-          }
+            "vue", "svelte", "astro", }
           if not vim.tbl_contains(allowed, ft) then
             return nil
           end
@@ -899,4 +925,3 @@ later(function() require('mini.visits').setup() end)
 -- - 'mini.doc' - needed only for plugin developers.
 -- - 'mini.fuzzy' - not really needed on a daily basis.
 -- - 'mini.test' - needed only for plugin developers.
-

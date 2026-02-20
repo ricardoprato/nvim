@@ -128,16 +128,6 @@ later(function()
     },
   }
 
-  -- React Native/Expo configurations ========================================
-  -- Helper: Check if React Native project
-  local function is_react_native_project()
-    local current_file = vim.api.nvim_buf_get_name(0)
-    if current_file == '' then return false end
-    local current_dir = vim.fn.fnamemodify(current_file, ':h')
-    local util = require('lspconfig.util')
-    return util.root_pattern('app.json', 'app.config.js', 'app.config.ts', 'metro.config.js')(current_dir) ~= nil
-  end
-
   -- React Native specific debug configurations
   local react_native_configs = {
     {
@@ -228,3 +218,4 @@ later(function()
     map(km[1], km[2], km[3], 'Debug: ' .. km[4])
   end
 end)
+

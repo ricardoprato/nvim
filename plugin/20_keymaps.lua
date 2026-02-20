@@ -49,6 +49,8 @@ nmap(']p', '<Cmd>exe "put "  . v:register<CR>', 'Paste Below')
 -- This is used to provide 'mini.clue' with extra clues.
 -- Add an entry if you create a new group.
 _G.Config.leader_group_clues = {
+  { mode = 'n', keys = '<Leader>a',  desc = '+AI (CodeCompanion)' },
+  { mode = 'x', keys = '<Leader>a',  desc = '+AI (CodeCompanion)' },
   { mode = 'n', keys = '<Leader>b',  desc = '+Buffer' },
   { mode = 'n', keys = '<Leader>d',  desc = '+Debug' },
   { mode = 'n', keys = '<Leader>e',  desc = '+Explore/Edit' },
@@ -101,6 +103,17 @@ nmap_leader('bs', new_scratch_buffer, 'Scratch')
 nmap_leader('bw', '<Cmd>lua MiniBufremove.wipeout()<CR>', 'Wipeout')
 nmap_leader('bW', '<Cmd>lua MiniBufremove.wipeout(0, true)<CR>', 'Wipeout!')
 nmap_leader('bo', '<Cmd>%bd|e#<CR>', 'Delete all!')
+
+-- a is for 'AI' (CodeCompanion). Common usage:
+-- - `<Leader>aa` - open/focus CodeCompanion chat
+-- - `<Leader>ae` - inline edit with AI
+-- - `<Leader>at` - toggle chat window
+-- - `<Leader>ap` - open actions palette
+nmap_leader('aa', '<Cmd>CodeCompanionChat<CR>', 'Chat')
+nmap_leader('ae', '<Cmd>CodeCompanion<CR>', 'Inline edit')
+nmap_leader('at', '<Cmd>CodeCompanionChat Toggle<CR>', 'Toggle chat')
+nmap_leader('ap', '<Cmd>CodeCompanionActions<CR>', 'Actions palette')
+xmap_leader('aa', ":'<,'>CodeCompanionChat<CR>", 'Send to chat')
 
 -- e is for 'Explore' and 'Edit'. Common usage:
 -- - `<Leader>ed` - open explorer at current working directory
@@ -240,6 +253,14 @@ nmap_leader('ls', '<Cmd>lua vim.lsp.buf.definition()<CR>', 'Source definition')
 nmap_leader('lt', '<Cmd>lua vim.lsp.buf.type_definition()<CR>', 'Type definition')
 
 xmap_leader('lf', formatting_cmd, 'Format selection')
+
+-- Use LSP hover with K when LSP is available (instead of man pages)
+vim.api.nvim_create_autocmd('LspAttach', {
+  group = vim.api.nvim_create_augroup('lsp_attach_keymaps', { clear = true }),
+  callback = function(args)
+    vim.keymap.set('n', 'K', vim.lsp.buf.hover, { buffer = args.buf, desc = 'LSP Hover' })
+  end,
+})
 
 -- m is for 'Map'. Common usage:
 -- - `<Leader>mt` - toggle map from 'mini.map' (closed by default)

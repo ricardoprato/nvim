@@ -52,6 +52,7 @@ now_if_args(function()
     'python', 'xml', 'html', 'css',
     -- JavaScript frameworks
     'javascript', 'typescript', 'tsx', 'jsx',
+    'astro',
     -- Additional
     'bash', 'json', 'yaml', 'toml', 'dockerfile',
     'gitcommit', 'diff', 'query',
@@ -104,6 +105,7 @@ now_if_args(function()
     'jsonls',   -- JSON
     'yamlls',   -- YAML
     'lemminx',  -- XML (for Odoo)
+    'astro',    -- Astro files
   })
 end)
 -- SchemaStore ================================================================
@@ -153,7 +155,7 @@ later(function()
       typescriptreact = { 'prettier', 'deno_fmt', stop_after_first = true },
       json = { 'prettier', 'deno_fmt', stop_after_first = true },
       yaml = { 'prettier' },
-      xml = {}, -- Use LSP formatting for XML
+      xml = { 'xmlformatter' }
     },
   })
 
@@ -187,7 +189,9 @@ later(function()
   add('mason-org/mason-lspconfig.nvim')
   add('WhoIsSethDaniel/mason-tool-installer.nvim')
 
-  require('mason').setup()
+  require('mason').setup({
+    PATH = 'prepend', -- Asegurar que Mason binaries tengan prioridad
+  })
 
   -- Auto-install LSP servers
   require('mason-lspconfig').setup({
@@ -200,7 +204,9 @@ later(function()
       'jsonls',
       'yamlls',
       'lemminx', -- XML LSP for Odoo
+      'astro',
     },
+    automatic_installation = true,
   })
 
   -- Auto-install formatters and other tools
@@ -249,7 +255,7 @@ end)
 
 -- blink.cmp - async completion with fuzzy matching powered by Rust
 -- Replaces mini.completion for better performance and more features
-later(function()
+now_if_args(function()
   local function build_blink(params)
     vim.notify('Building blink.cmp', vim.log.levels.INFO)
     local obj = vim.system({ 'cargo', 'build', '--release' }, { cwd = params.path }):wait()
@@ -273,21 +279,17 @@ later(function()
     --   nerd_font_variant = 'mono',
     -- },
     --
-    -- completion = {
-    --   menu = {
+    -- completion = {    --   menu = {
     --     auto_show = true,
     --     draw = {
     --       columns = { { 'kind_icon' }, { 'label', gap = 1 } },
     --     },
-    --   },
-    -- },
+    --   },    -- },
     --
     -- sources = {
-    --   default = { 'lsp', 'path', 'snippets', 'buffer' },
-    -- },
+    --   default = { 'lsp', 'path', 'snippets', 'buffer' },    -- },
     --
     -- cmdline = { enabled = false },
-
     snippets = { preset = 'mini_snippets' },
 
     -- signature = { enabled = false },
@@ -352,6 +354,11 @@ end)
 
 -- Vim Sleuth ==================================================================
 
+-- vim-sleuth - Automatic 'shiftwidth' and 'expandtab'
+
+now_if_args(function()
+  add({ source = 'tpope/vim-sleuth' })
+end)
 -- vim-sleuth - Automatic 'shiftwidth' and 'expandtab'
 
 now_if_args(function()

@@ -22,8 +22,9 @@ vim.o.mouse       = 'a'                              -- Enable mouse
 vim.o.mousescroll = 'ver:25,hor:6'                   -- Customize mouse scroll
 vim.o.switchbuf   = 'usetab,uselast'                 -- Use already opened buffers when switching
 vim.o.undofile    = true                             -- Enable persistent undo
+vim.o.undolevels  = 500                              -- Limit undo levels (default 1000)
 
-vim.o.shada       = "'100,<50,s10,:1000,/100,@100,h" -- Limit ShaDa file (for startup)
+vim.o.shada       = "'50,<30,s5,:500,/50,@50,h"      -- Limit ShaDa file (for startup)
 
 -- Enable all filetype plugins and syntax (if not enabled, for better startup)
 vim.cmd('filetype plugin indent on')
@@ -50,6 +51,7 @@ vim.o.wrap           = false               -- Don't visually wrap lines (toggle 
 vim.o.rnu            = true                -- Show the line number relative to the line with the cursor
 
 vim.o.cursorlineopt  = 'screenline,number' -- Show cursor line per screen line
+vim.o.synmaxcol      = 300                 -- No resaltar después de columna 300
 
 -- Special UI symbols. More is set via 'mini.basics' later.
 vim.o.fillchars      = 'eob: ,fold:╌'
@@ -124,24 +126,24 @@ MiniDeps.later(function() vim.diagnostic.config(diagnostic_opts) end)
 -- Performance optimizations for large files (useful for Odoo XML/Python files)
 vim.g.large_file_cutoff = 1024 * 500 -- 500KB
 
-_G.Config.new_autocmd('BufReadPre', nil, function(args)
-  local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(args.buf))
-  if ok and stats and stats.size > vim.g.large_file_cutoff then
-    -- Mark buffer as large file
-    vim.b[args.buf].large_file = true
-
-    -- Disable performance-heavy features
-    vim.opt_local.swapfile = false
-    vim.opt_local.undolevels = -1
-    vim.opt_local.foldmethod = 'manual'
-    vim.opt_local.spell = false
-    vim.opt_local.eventignore = 'all'
-  end
-end, 'Optimize large files')
+-- _G.Config.new_autocmd('BufReadPre', nil, function(args)
+--   local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(args.buf))
+--   if ok and stats and stats.size > vim.g.large_file_cutoff then
+--     -- Mark buffer as large file
+--     vim.b[args.buf].large_file = true
+--
+--     -- Disable performance-heavy features
+--     vim.opt_local.swapfile = false
+--     vim.opt_local.undolevels = -1
+--     vim.opt_local.foldmethod = 'manual'
+--     vim.opt_local.spell = false
+--     vim.opt_local.eventignore = 'all'
+--   end
+-- end, 'Optimize large files')
 
 _G.Config.new_autocmd('BufWinEnter', nil, function(args)
   local buftype = vim.api.nvim_get_option_value('buftype', { buf = args.buf })
-  if vim.tbl_contains({ 'help', 'nofile', 'quickfix', 'avante' }, buftype) and vim.fn.maparg('q', 'n') == '' then
+  if vim.tbl_contains({ 'help', 'nofile', 'quickfix' }, buftype) and vim.fn.maparg('q', 'n') == '' then
     vim.keymap.set('n', 'q', '<cmd>close<cr>', {
       desc = 'Close window',
       buffer = args.buf,
@@ -150,5 +152,30 @@ _G.Config.new_autocmd('BufWinEnter', nil, function(args)
     })
   end
 end, 'Make q close help, man, quickfix, dap floats')
+
+-- Detectar archivos eliminados al cambiar de branch o al volver a nvim
+_G.Config.new_autocmd('FocusGained', nil, function()
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_loaded(buf) then
+      local name = vim.api.nvim_buf_get_name(buf)
+      local buftype = vim.bo[buf].buftype
+      -- Solo verificar buffers normales (buftype vacío) con nombre de archivo real
+      if name ~= '' and buftype == '' and not name:match('^%w+://') then
+        if vim.fn.filereadable(name) == 0 then
+          local modified = vim.bo[buf].modified
+          if not modified then
+            vim.api.nvim_buf_delete(buf, { force = false })
+            vim.notify('Buffer cerrado: ' .. vim.fn.fnamemodify(name, ':t'), vim.log.levels.WARN)
+          else
+            vim.notify('Archivo eliminado (tiene cambios): ' .. vim.fn.fnamemodify(name, ':t'), vim.log.levels.ERROR)
+          end
+        end
+      end
+    end
+  end
+end, 'Check deleted files on focus')
+
+-- Silenciar warnings de métodos LSP no soportados (Neovim 0.11+)
+vim.lsp.handlers['workspace/diagnostic/refresh'] = function() return true end
 
 -- stylua: ignore end
