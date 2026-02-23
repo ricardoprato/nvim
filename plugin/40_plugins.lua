@@ -55,7 +55,7 @@ now_if_args(function()
     'astro',
     -- Additional
     'bash', 'json', 'yaml', 'toml', 'dockerfile',
-    'gitcommit', 'diff', 'query',
+    'gitcommit', 'diff', 'query', 'http'
   }
   local isnt_installed = function(lang)
     return #vim.api.nvim_get_runtime_file('parser/' .. lang .. '.*', false) == 0
@@ -358,6 +358,72 @@ end)
 
 now_if_args(function()
   add({ source = 'tpope/vim-sleuth' })
+end)
+
+-- Kulala =====================================================================
+
+-- kulala.nvim - HTTP client for testing APIs directly from Neovim
+-- Create .http or .rest files to make HTTP requests
+later(function()
+  add({
+    source = 'mistweaverco/kulala.nvim',
+    depends = { 'nvim-lua/plenary.nvim' },
+  })
+
+  require('kulala').setup({
+    -- Display mode: 'float' or 'split'
+    display_mode = 'float',
+    -- Split direction: 'vertical' or 'horizontal'
+    split_direction = 'vertical',
+    -- Default formatters
+    default_formatters = {
+      json = { 'jq', '-r' },
+      xml = { 'xmllint', '--format', '-' },
+      html = { 'xmllint', '--format', '--html', '-' },
+    },
+    -- Show icons in the request selector
+    icons = {
+      inlay = {
+        loading = '⏳',
+        done = '✅',
+        error = '❌',
+      },
+    },
+    -- Additional cURL options
+    additional_curl_options = {},
+  })
+
+  -- Keybindings for kulala (only in .http and .rest files)
+  local kulala_augroup = vim.api.nvim_create_augroup('kulala-config', { clear = true })
+  vim.api.nvim_create_autocmd('FileType', {
+    group = kulala_augroup,
+    pattern = { 'http', 'rest' },
+    callback = function(ev)
+      local map = function(mode, lhs, rhs, desc)
+        vim.keymap.set(mode, lhs, rhs, { buffer = ev.buf, desc = 'Kulala: ' .. desc })
+      end
+
+      -- Execute request
+      map('n', '<CR>', require('kulala').run, 'Run request')
+      map('n', '<leader>rr', require('kulala').run, 'Run request')
+
+      -- Navigate between requests
+      map('n', '[r', require('kulala').jump_prev, 'Previous request')
+      map('n', ']r', require('kulala').jump_next, 'Next request')
+
+      -- Request management
+      map('n', '<leader>ri', require('kulala').inspect, 'Inspect request')
+      map('n', '<leader>rt', require('kulala').toggle_view, 'Toggle headers/body')
+      map('n', '<leader>rc', require('kulala').copy, 'Copy as cURL')
+      map('n', '<leader>rp', require('kulala').from_curl, 'Paste from cURL')
+
+      -- Response actions
+      map('n', '<leader>ry', require('kulala').copy_response, 'Copy response')
+
+      -- Environment selection
+      map('n', '<leader>re', require('kulala').set_selected_env, 'Select environment')
+    end,
+  })
 end)
 -- vim-sleuth - Automatic 'shiftwidth' and 'expandtab'
 
