@@ -31,47 +31,71 @@ local now_if_args = _G.Config.now_if_args
 --
 -- Add these plugins now if file (and not 'mini.starter') is shown after startup.
 now_if_args(function()
-  add({
-    source = 'nvim-treesitter/nvim-treesitter',
-    -- Use `main` branch since `master` branch is frozen, yet still default
-    checkout = 'main',
-    -- Update tree-sitter parser after plugin is updated
-    hooks = { post_checkout = function() vim.cmd('TSUpdate') end },
-  })
-  add({
-    source = 'nvim-treesitter/nvim-treesitter-textobjects',
-    -- Same logic as for 'nvim-treesitter'
-    checkout = 'main',
-  })
+	add({
+		source = "nvim-treesitter/nvim-treesitter",
+		-- Use `main` branch since `master` branch is frozen, yet still default
+		checkout = "main",
+		-- Update tree-sitter parser after plugin is updated
+		hooks = {
+			post_checkout = function()
+				vim.cmd("TSUpdate")
+			end,
+		},
+	})
+	add({
+		source = "nvim-treesitter/nvim-treesitter-textobjects",
+		-- Same logic as for 'nvim-treesitter'
+		checkout = "main",
+	})
 
-  -- Define languages which will have parsers installed and auto enabled
-  local languages = {
-    -- Default
-    'lua', 'vimdoc', 'markdown', 'markdown_inline',
-    -- Odoo stack
-    'python', 'xml', 'html', 'css',
-    -- JavaScript frameworks
-    'javascript', 'typescript', 'tsx', 'jsx',
-    'astro',
-    -- Additional
-    'bash', 'json', 'yaml', 'toml', 'dockerfile',
-    'gitcommit', 'diff', 'query', 'http'
-  }
-  local isnt_installed = function(lang)
-    return #vim.api.nvim_get_runtime_file('parser/' .. lang .. '.*', false) == 0
-  end
-  local to_install = vim.tbl_filter(isnt_installed, languages)
-  if #to_install > 0 then require('nvim-treesitter').install(to_install) end
+	-- Define languages which will have parsers installed and auto enabled
+	local languages = {
+		-- Default
+		"lua",
+		"vimdoc",
+		"markdown",
+		"markdown_inline",
+		-- Odoo stack
+		"python",
+		"xml",
+		"html",
+		"css",
+		-- JavaScript frameworks
+		"javascript",
+		"typescript",
+		"tsx",
+		"jsx",
+		"astro",
+		-- Additional
+		"bash",
+		"json",
+		"yaml",
+		"toml",
+		"dockerfile",
+		"gitcommit",
+		"diff",
+		"query",
+		"http",
+	}
+	local isnt_installed = function(lang)
+		return #vim.api.nvim_get_runtime_file("parser/" .. lang .. ".*", false) == 0
+	end
+	local to_install = vim.tbl_filter(isnt_installed, languages)
+	if #to_install > 0 then
+		require("nvim-treesitter").install(to_install)
+	end
 
-  -- Enable tree-sitter after opening a file for a target language
-  local filetypes = {}
-  for _, lang in ipairs(languages) do
-    for _, ft in ipairs(vim.treesitter.language.get_filetypes(lang)) do
-      table.insert(filetypes, ft)
-    end
-  end
-  local ts_start = function(ev) vim.treesitter.start(ev.buf) end
-  _G.Config.new_autocmd('FileType', filetypes, ts_start, 'Start tree-sitter')
+	-- Enable tree-sitter after opening a file for a target language
+	local filetypes = {}
+	for _, lang in ipairs(languages) do
+		for _, ft in ipairs(vim.treesitter.language.get_filetypes(lang)) do
+			table.insert(filetypes, ft)
+		end
+	end
+	local ts_start = function(ev)
+		vim.treesitter.start(ev.buf)
+	end
+	_G.Config.new_autocmd("FileType", filetypes, ts_start, "Start tree-sitter")
 end)
 
 -- Language servers ===========================================================
@@ -90,28 +114,30 @@ end)
 --
 -- Add it now if file (and not 'mini.starter') is shown after startup.
 now_if_args(function()
-  add('neovim/nvim-lspconfig')
+	add("neovim/nvim-lspconfig")
 
-  -- Use `:h vim.lsp.enable()` to automatically enable language server based on
-  -- the rules provided by 'nvim-lspconfig'.
-  -- Use `:h vim.lsp.config()` or 'after/lsp/' directory to configure servers.
-  vim.lsp.enable({
-    'lua_ls',   -- Lua
-    'pyright',  -- Python
-    'odoo_lsp', -- Odoo (Python/XML/JS)
-    'ts_ls',    -- TypeScript/JavaScript
-    'eslint',   -- ESLint (React Native/Expo)
-    'denols',   -- Deno
-    'jsonls',   -- JSON
-    'yamlls',   -- YAML
-    'lemminx',  -- XML (for Odoo)
-    'astro',    -- Astro files
-  })
+	-- Use `:h vim.lsp.enable()` to automatically enable language server based on
+	-- the rules provided by 'nvim-lspconfig'.
+	-- Use `:h vim.lsp.config()` or 'after/lsp/' directory to configure servers.
+	vim.lsp.enable({
+		"lua_ls", -- Lua
+		"pyright", -- Python
+		"odoo_lsp", -- Odoo (Python/XML/JS)
+		"ts_ls", -- TypeScript/JavaScript
+		"eslint", -- ESLint (React Native/Expo)
+		"denols", -- Deno
+		"jsonls", -- JSON
+		"yamlls", -- YAML
+		"lemminx", -- XML (for Odoo)
+		"astro", -- Astro files
+	})
 end)
 -- SchemaStore ================================================================
 
 -- SchemaStore provides JSON/YAML schemas for better validation and completion
-now_if_args(function() add('b0o/SchemaStore.nvim') end)
+now(function()
+	add("b0o/SchemaStore.nvim")
+end)
 
 -- Formatting =================================================================
 
@@ -122,45 +148,45 @@ now_if_args(function() add('b0o/SchemaStore.nvim') end)
 -- The 'stevearc/conform.nvim' plugin is a good and maintained solution for easier
 -- formatting setup.
 later(function()
-  add('stevearc/conform.nvim')
+	add("stevearc/conform.nvim")
 
-  -- See also:
-  -- - `:h Conform`
-  -- - `:h conform-options`
-  -- - `:h conform-formatters`
-  require('conform').setup({
-    notify_on_error = false,
-    format_on_save = function(bufnr)
-      -- Don't auto-format if disabled
-      if vim.b[bufnr].disable_autoformat or vim.g.disable_autoformat then
-        return
-      end
+	-- See also:
+	-- - `:h Conform`
+	-- - `:h conform-options`
+	-- - `:h conform-formatters`
+	require("conform").setup({
+		notify_on_error = false,
+		format_on_save = function(bufnr)
+			-- Don't auto-format if disabled
+			if vim.b[bufnr].disable_autoformat or vim.g.disable_autoformat then
+				return
+			end
 
-      return {
-        timeout_ms = 2000,
-        lsp_format = 'fallback',
-      }
-    end,
-    formatters = {
-      black = {
-        prepend_args = { '--fast' },
-      },
-    },
-    formatters_by_ft = {
-      lua = { 'stylua' },
-      python = { 'isort', 'black' },
-      javascript = { 'prettier', 'deno_fmt', stop_after_first = true },
-      typescript = { 'prettier', 'deno_fmt', stop_after_first = true },
-      javascriptreact = { 'prettier', 'deno_fmt', stop_after_first = true },
-      typescriptreact = { 'prettier', 'deno_fmt', stop_after_first = true },
-      json = { 'prettier', 'deno_fmt', stop_after_first = true },
-      yaml = { 'prettier' },
-      xml = { 'xmlformatter' }
-    },
-  })
+			return {
+				timeout_ms = 2000,
+				lsp_format = "never",
+			}
+		end,
+		formatters = {
+			black = {
+				prepend_args = { "--fast" },
+			},
+		},
+		formatters_by_ft = {
+			lua = { "stylua" },
+			python = { "isort", "black" },
+			javascript = { "prettier", "deno_fmt", stop_after_first = true },
+			typescript = { "prettier", "deno_fmt", stop_after_first = true },
+			javascriptreact = { "prettier", "deno_fmt", stop_after_first = true },
+			typescriptreact = { "prettier", "deno_fmt", stop_after_first = true },
+			json = { "prettier", "deno_fmt", stop_after_first = true },
+			yaml = { "prettier" },
+			xml = { "xmlformatter" },
+		},
+	})
 
-  -- Set formatexpr for gq command
-  vim.o.formatexpr = "v:lua.require'conform'.formatexpr()"
+	-- Set formatexpr for gq command
+	vim.o.formatexpr = "v:lua.require'conform'.formatexpr()"
 end)
 
 -- Snippets ===================================================================
@@ -172,7 +198,9 @@ end)
 -- snippet files. They are organized in 'snippets/' directory (mostly) per language.
 -- 'mini.snippets' is designed to work with it as seamlessly as possible.
 -- See `:h MiniSnippets.gen_loader.from_lang()`.
-later(function() add('rafamadriz/friendly-snippets') end)
+later(function()
+	add("rafamadriz/friendly-snippets")
+end)
 
 -- Honorable mentions =========================================================
 
@@ -185,38 +213,41 @@ later(function() add('rafamadriz/friendly-snippets') end)
 --
 -- You can use it like so:
 later(function()
-  add('mason-org/mason.nvim')
-  add('mason-org/mason-lspconfig.nvim')
-  add('WhoIsSethDaniel/mason-tool-installer.nvim')
+	add("mason-org/mason.nvim")
+	add("mason-org/mason-lspconfig.nvim")
+	add("WhoIsSethDaniel/mason-tool-installer.nvim")
 
-  require('mason').setup({
-    PATH = 'prepend', -- Asegurar que Mason binaries tengan prioridad
-  })
+	require("mason").setup({
+		PATH = "prepend", -- Asegurar que Mason binaries tengan prioridad
+	})
 
-  -- Auto-install LSP servers
-  require('mason-lspconfig').setup({
-    ensure_installed = {
-      'lua_ls',
-      'pyright',
-      'ts_ls',
-      'eslint', -- ESLint for React Native/Expo
-      'denols',
-      'jsonls',
-      'yamlls',
-      'lemminx', -- XML LSP for Odoo
-      'astro',
-    },
-    automatic_installation = true,
-  })
+	-- Auto-install LSP servers
+	require("mason-lspconfig").setup({
+		ensure_installed = {
+			"lua_ls",
+			"pyright",
+			"ts_ls",
+			"eslint", -- ESLint for React Native/Expo
+			"denols",
+			"jsonls",
+			"yamlls",
+			"lemminx", -- XML LSP for Odoo
+			"astro",
+		},
+		automatic_installation = true,
+	})
 
-  -- Auto-install formatters and other tools
-  require('mason-tool-installer').setup({
-    ensure_installed = {
-      -- Formatters
-      'stylua', 'black', 'isort', 'prettier',
-    },
-    auto_update = true,
-  })
+	-- Auto-install formatters and other tools
+	require("mason-tool-installer").setup({
+		ensure_installed = {
+			-- Formatters
+			"stylua",
+			"black",
+			"isort",
+			"prettier",
+		},
+		auto_update = true,
+	})
 end)
 
 -- Beautiful, usable, well maintained color schemes outside of 'mini.nvim' and
@@ -224,31 +255,31 @@ end)
 -- enabled in 'plugin/30_mini.lua' or other suggested 'mini.hues' based ones.
 
 now(function()
-  add({ source = "catppuccin/nvim", name = "catppuccin" })
-  require("catppuccin").setup({
-    flavour = "auto", -- latte, frappe, macchiato, mocha
-    background = {    -- :h background
-      light = "latte",
-      dark = "mocha",
-    },
-    dim_inactive = {
-      enabled = true,    -- dims the background color of inactive window
-      shade = "dark",
-      percentage = 0.15, -- percentage of the shade to apply to the inactive window
-    },
-    color_overrides = {},
-    custom_highlights = {},
-    default_integrations = true,
-    integrations = {
-      mason = true,
-      mini = {
-        enabled = true,
-        indentscope_color = "mocha", -- catppuccin color (eg. `lavender`) Default: text
-      },
-      dap = true
-    }
-  })
-  vim.cmd.colorscheme "catppuccin"
+	add({ source = "catppuccin/nvim", name = "catppuccin" })
+	require("catppuccin").setup({
+		flavour = "auto", -- latte, frappe, macchiato, mocha
+		background = { -- :h background
+			light = "latte",
+			dark = "mocha",
+		},
+		dim_inactive = {
+			enabled = true, -- dims the background color of inactive window
+			shade = "dark",
+			percentage = 0.15, -- percentage of the shade to apply to the inactive window
+		},
+		color_overrides = {},
+		custom_highlights = {},
+		default_integrations = true,
+		integrations = {
+			mason = true,
+			mini = {
+				enabled = true,
+				indentscope_color = "mocha", -- catppuccin color (eg. `lavender`) Default: text
+			},
+			dap = true,
+		},
+	})
+	vim.cmd.colorscheme("catppuccin")
 end)
 
 -- Completion =================================================================
@@ -256,108 +287,65 @@ end)
 -- blink.cmp - async completion with fuzzy matching powered by Rust
 -- Replaces mini.completion for better performance and more features
 now_if_args(function()
-  local function build_blink(params)
-    vim.notify('Building blink.cmp', vim.log.levels.INFO)
-    local obj = vim.system({ 'cargo', 'build', '--release' }, { cwd = params.path }):wait()
-    if obj.code == 0 then
-      vim.notify('Building blink.cmp done', vim.log.levels.INFO)
-    else
-      vim.notify('Building blink.cmp failed', vim.log.levels.ERROR)
-    end
-  end
-  add({
-    source = 'saghen/blink.cmp',
-    depends = { 'rafamadriz/friendly-snippets' },
-    hooks = {
-      post_install = build_blink,
-      post_checkout = build_blink,
-    },
-  })
+	local function build_blink(params)
+		vim.notify("Building blink.cmp", vim.log.levels.INFO)
+		local obj = vim.system({ "cargo", "build", "--release" }, { cwd = params.path }):wait()
+		if obj.code == 0 then
+			vim.notify("Building blink.cmp done", vim.log.levels.INFO)
+		else
+			vim.notify("Building blink.cmp failed", vim.log.levels.ERROR)
+		end
+	end
+	add({
+		source = "saghen/blink.cmp",
+		depends = { "rafamadriz/friendly-snippets" },
+		hooks = {
+			post_install = build_blink,
+			post_checkout = build_blink,
+		},
+	})
 
-  require('blink.cmp').setup({
-    -- appearance = {
-    --   nerd_font_variant = 'mono',
-    -- },
-    --
-    -- completion = {    --   menu = {
-    --     auto_show = true,
-    --     draw = {
-    --       columns = { { 'kind_icon' }, { 'label', gap = 1 } },
-    --     },
-    --   },    -- },
-    --
-    -- sources = {
-    --   default = { 'lsp', 'path', 'snippets', 'buffer' },    -- },
-    --
-    -- cmdline = { enabled = false },
-    snippets = { preset = 'mini_snippets' },
+	require("blink.cmp").setup({
+		snippets = { preset = "mini_snippets" },
+	})
 
-    -- signature = { enabled = false },
-  })
-
-  -- Advertise blink.cmp capabilities to LSP servers
-  vim.lsp.config('*', { capabilities = require('blink.cmp').get_lsp_capabilities() })
+	-- Advertise blink.cmp capabilities to LSP servers
+	vim.lsp.config("*", { capabilities = require("blink.cmp").get_lsp_capabilities() })
 end)
 
 -- Obsidian ==================================================================
 
 -- obsidian.nvim - Note-taking with Obsidian integration
 later(function()
-  add({
-    source = 'obsidian-nvim/obsidian.nvim',
-    depends = { 'nvim-lua/plenary.nvim' },
-  })
+	add({
+		source = "obsidian-nvim/obsidian.nvim",
+		depends = { "nvim-lua/plenary.nvim" },
+	})
 
-  require('obsidian').setup({
-    workspaces = {
-      {
-        name = 'personal',
-        path = '~/obsidian',
-      },
-    },
-
-    -- notes_subdir = 'notes',
-    -- daily_notes = {
-    --   folder = 'daily',
-    --   date_format = '%Y-%m-%d',
-    --   template = 'daily.md',
-    -- },
-    --
-    -- completion = {
-    --   nvim_cmp = false,
-    --   min_chars = 2,
-    -- },
-    --
-    -- new_notes_location = 'notes_subdir',
-    --
-    -- templates = {
-    --   folder = 'templates',
-    --   date_format = '%Y-%m-%d',
-    --   time_format = '%H:%M',
-    -- },
-    --
-    -- picker = {
-    --   name = 'mini.pick',
-    -- },
-    --
-    -- ui = {
-    --   enable = true,
-    -- },
-    --
-    -- attachments = {
-    --   folder = 'assets/imgs',
-    -- },
-    --
-    legacy_commands = false,
-  })
+	require("obsidian").setup({
+		workspaces = {
+			{
+				name = "personal",
+				path = "~/obsidian",
+			},
+		},
+	})
 end)
 
--- Vim Sleuth ==================================================================
+-- Diffview ==================================================================
+
+-- diffview.nvim - Side-by-side diff viewer for multi-file reviews
+-- Useful for reviewing AI changes across multiple files.
+-- Usage: <Leader>gv to open, <Leader>gV to close
+later(function()
+	add({ source = "sindrets/diffview.nvim" })
+	require("diffview").setup({ use_icons = true })
+end)
 
 -- vim-sleuth - Automatic 'shiftwidth' and 'expandtab'
 
 now_if_args(function()
-  add({ source = 'tpope/vim-sleuth' })
+	add({ source = "tpope/vim-sleuth" })
 end)
 
 -- Kulala =====================================================================
@@ -365,68 +353,63 @@ end)
 -- kulala.nvim - HTTP client for testing APIs directly from Neovim
 -- Create .http or .rest files to make HTTP requests
 later(function()
-  add({
-    source = 'mistweaverco/kulala.nvim',
-    depends = { 'nvim-lua/plenary.nvim' },
-  })
+	add({
+		source = "mistweaverco/kulala.nvim",
+		depends = { "nvim-lua/plenary.nvim" },
+	})
 
-  require('kulala').setup({
-    -- Display mode: 'float' or 'split'
-    display_mode = 'float',
-    -- Split direction: 'vertical' or 'horizontal'
-    split_direction = 'vertical',
-    -- Default formatters
-    default_formatters = {
-      json = { 'jq', '-r' },
-      xml = { 'xmllint', '--format', '-' },
-      html = { 'xmllint', '--format', '--html', '-' },
-    },
-    -- Show icons in the request selector
-    icons = {
-      inlay = {
-        loading = '⏳',
-        done = '✅',
-        error = '❌',
-      },
-    },
-    -- Additional cURL options
-    additional_curl_options = {},
-  })
+	require("kulala").setup({
+		-- Display mode: 'float' or 'split'
+		display_mode = "float",
+		-- Split direction: 'vertical' or 'horizontal'
+		split_direction = "vertical",
+		-- Default formatters
+		default_formatters = {
+			json = { "jq", "-r" },
+			xml = { "xmllint", "--format", "-" },
+			html = { "xmllint", "--format", "--html", "-" },
+		},
+		-- Show icons in the request selector
+		icons = {
+			inlay = {
+				loading = "⏳",
+				done = "✅",
+				error = "❌",
+			},
+		},
+		-- Additional cURL options
+		additional_curl_options = {},
+	})
 
-  -- Keybindings for kulala (only in .http and .rest files)
-  local kulala_augroup = vim.api.nvim_create_augroup('kulala-config', { clear = true })
-  vim.api.nvim_create_autocmd('FileType', {
-    group = kulala_augroup,
-    pattern = { 'http', 'rest' },
-    callback = function(ev)
-      local map = function(mode, lhs, rhs, desc)
-        vim.keymap.set(mode, lhs, rhs, { buffer = ev.buf, desc = 'Kulala: ' .. desc })
-      end
+	-- Keybindings for kulala (only in .http and .rest files)
+	local kulala_augroup = vim.api.nvim_create_augroup("kulala-config", { clear = true })
+	vim.api.nvim_create_autocmd("FileType", {
+		group = kulala_augroup,
+		pattern = { "http", "rest" },
+		callback = function(ev)
+			local map = function(mode, lhs, rhs, desc)
+				vim.keymap.set(mode, lhs, rhs, { buffer = ev.buf, desc = "Kulala: " .. desc })
+			end
 
-      -- Execute request
-      map('n', '<CR>', require('kulala').run, 'Run request')
-      map('n', '<leader>rr', require('kulala').run, 'Run request')
+			-- Execute request
+			map("n", "<CR>", require("kulala").run, "Run request")
+			map("n", "<leader>rr", require("kulala").run, "Run request")
 
-      -- Navigate between requests
-      map('n', '[r', require('kulala').jump_prev, 'Previous request')
-      map('n', ']r', require('kulala').jump_next, 'Next request')
+			-- Navigate between requests
+			map("n", "[r", require("kulala").jump_prev, "Previous request")
+			map("n", "]r", require("kulala").jump_next, "Next request")
 
-      -- Request management
-      map('n', '<leader>ri', require('kulala').inspect, 'Inspect request')
-      map('n', '<leader>rt', require('kulala').toggle_view, 'Toggle headers/body')
-      map('n', '<leader>rc', require('kulala').copy, 'Copy as cURL')
-      map('n', '<leader>rp', require('kulala').from_curl, 'Paste from cURL')
+			-- Request management
+			map("n", "<leader>ri", require("kulala").inspect, "Inspect request")
+			map("n", "<leader>rt", require("kulala").toggle_view, "Toggle headers/body")
+			map("n", "<leader>rc", require("kulala").copy, "Copy as cURL")
+			map("n", "<leader>rp", require("kulala").from_curl, "Paste from cURL")
 
-      -- Response actions
-      map('n', '<leader>ry', require('kulala').copy_response, 'Copy response')
+			-- Response actions
+			map("n", "<leader>ry", require("kulala").copy_response, "Copy response")
 
-      -- Environment selection
-      map('n', '<leader>re', require('kulala').set_selected_env, 'Select environment')
-    end,
-  })
-end)
--- vim-sleuth - Automatic 'shiftwidth' and 'expandtab'
-
-now_if_args(function()
-  add({ source = 'tpope/vim-sleuth' })
+			-- Environment selection
+			map("n", "<leader>re", require("kulala").set_selected_env, "Select environment")
+		end,
+	})
 end)

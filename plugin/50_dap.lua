@@ -172,14 +172,19 @@ later(function()
   dap.configurations.typescriptreact = dap.configurations.javascript
   dap.configurations.javascriptreact = dap.configurations.javascript
 
-  -- Automatically load .vscode/launch.json configurations ==================
-  local load_launchjs = function()
-    local ok, vscode = pcall(require, 'dap.ext.vscode')
-    if ok then
-      vscode.load_launchjs()
-    end
+  -- Override launch.json provider to find .vscode/launch.json relative ======
+  -- to the current buffer (walking up directories) instead of using cwd.
+  -- This fixes the case where nvim is opened in ~/odoo/ but the project
+  -- with .vscode/launch.json is in a subdirectory.
+  local vscode = require('dap.ext.vscode')
+  dap.providers.configs["dap.launch.json"] = function(bufnr)
+    local bufname = vim.api.nvim_buf_get_name(bufnr)
+    if bufname == '' then return {} end
+    local dir = vim.fn.fnamemodify(bufname, ':p:h')
+    local launch_json = vim.fs.find('.vscode/launch.json', { path = dir, upward = true, type = 'file' })[1]
+    if not launch_json then return {} end
+    return vscode.getconfigs(launch_json)
   end
-  _G.Config.new_autocmd({ 'VimEnter', 'FileType', 'BufEnter', 'WinEnter' }, nil, load_launchjs, 'Load launch.json')
 
   -- DAP Keymaps (declarative) ================================================
   local keymaps = {

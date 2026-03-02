@@ -121,25 +121,6 @@ local diagnostic_opts = {
 -- Use `later()` to avoid sourcing `vim.diagnostic` on startup
 MiniDeps.later(function() vim.diagnostic.config(diagnostic_opts) end)
 
--- Large file handling ========================================================
-
--- Performance optimizations for large files (useful for Odoo XML/Python files)
-vim.g.large_file_cutoff = 1024 * 500 -- 500KB
-
--- _G.Config.new_autocmd('BufReadPre', nil, function(args)
---   local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(args.buf))
---   if ok and stats and stats.size > vim.g.large_file_cutoff then
---     -- Mark buffer as large file
---     vim.b[args.buf].large_file = true
---
---     -- Disable performance-heavy features
---     vim.opt_local.swapfile = false
---     vim.opt_local.undolevels = -1
---     vim.opt_local.foldmethod = 'manual'
---     vim.opt_local.spell = false
---     vim.opt_local.eventignore = 'all'
---   end
--- end, 'Optimize large files')
 
 _G.Config.new_autocmd('BufWinEnter', nil, function(args)
   local buftype = vim.api.nvim_get_option_value('buftype', { buf = args.buf })
@@ -174,8 +155,5 @@ _G.Config.new_autocmd('FocusGained', nil, function()
     end
   end
 end, 'Check deleted files on focus')
-
--- Silenciar warnings de métodos LSP no soportados (Neovim 0.11+)
-vim.lsp.handlers['workspace/diagnostic/refresh'] = function() return true end
 
 -- stylua: ignore end

@@ -1,124 +1,53 @@
 local M = {}
 local root = require('utils.root')
 
+--- Discover git repositories under global root (up to depth 3)
+local function get_repos()
+  local global = root.global_root()
+
+  local out = vim.system(
+    { 'find', global, '-maxdepth', '5', '-name', '.git', '-type', 'd' },
+    { text = true, stderr = false }
+  ):wait()
+  if out.code ~= 0 then return {} end
+
+  local output = out.stdout
+
+  local repos = {}
+  local escaped_root = vim.pesc(global) .. '/'
+  for git_dir in output:gmatch('[^\r\n]+') do
+    local repo_path = vim.fn.fnamemodify(git_dir, ':h')
+    local relative = repo_path:gsub('^' .. escaped_root, '')
+    repos[#repos + 1] = { path = repo_path, relative = relative }
+  end
+
+  table.sort(repos, function(a, b) return a.relative < b.relative end)
+  return repos
+end
+
+--- Format repo item with branch and sync info for display
+local function format_repo_item(repo)
+  local git = require('utils.git')
+  local branch = git.get_current_branch(repo.path) or 'unknown'
+
+  local status = git.get_ahead_behind(repo.path)
+  local sync = ''
+  if status.ahead > 0 then sync = sync .. ' ↑' .. status.ahead end
+  if status.behind > 0 then sync = sync .. ' ↓' .. status.behind end
+
+  return {
+    text = string.format('[%s] %s%s', repo.relative, branch, sync),
+    path = repo.path,
+    relative = repo.relative,
+    branch = branch,
+  }
+end
+
 --- Global file picker
 -- Busca archivos desde donde se abrió Neovim
 function M.global_files()
   local MiniPick = require 'mini.pick'
-  MiniPick.builtin.files({}, { source = { cwd = root.global_root() } })
-end
-
---- Multi-grep with file type shortcuts
--- Permite buscar texto y filtrar por tipo de archivo separando con doble espacio
--- Ejemplo: "pattern  l" busca "pattern" solo en archivos *.lua
--- Shortcuts disponibles:
---   l = *.lua, v = *.vim, n = *.{vim,lua}, c = *.c, r = *.rs
---   g = *.go, p = *.py, x = *.xml, t = *.ts, j = *.js, m = *.md
-function M.multi_grep(opts)
-  opts = opts or {}
-  local cwd = opts.cwd or root.project_root() or vim.fn.getcwd()
-
-  -- Shortcuts de tipo de archivo (igual que en telescope)
-  local shortcuts = opts.shortcuts or {
-    ['l'] = '*.lua',
-    ['v'] = '*.vim',
-    ['n'] = '*.{vim,lua}',
-    ['c'] = '*.c',
-    ['r'] = '*.rs',
-    ['g'] = '*.go',
-    ['p'] = '*.py',
-    ['x'] = '*.xml',
-    ['t'] = '*.ts',
-    ['j'] = '*.js',
-    ['m'] = '*.md',
-  }
-
-  local MiniPick = require 'mini.pick'
-  local process
-
-  local set_items_opts = { do_match = false }
-  local spawn_opts = { cwd = cwd }
-
-  local match = function(_, _, query)
-    -- Terminar proceso anterior si existe
-    pcall(vim.loop.process_kill, process)
-
-    -- Para query vacío, mostrar items vacíos
-    if #query == 0 then
-      return MiniPick.set_picker_items({}, set_items_opts)
-    end
-
-    -- Obtener el query completo como string
-    local full_query = table.concat(query)
-
-    -- Separar por doble espacio (patrón de búsqueda  filtro de archivo)
-    local parts = vim.split(full_query, '  ', { plain = true })
-    local search_pattern = parts[1]
-    local file_pattern = parts[2]
-
-    -- Construir comando de ripgrep
-    local command = {
-      'rg',
-      '--color=never',
-      '--no-heading',
-      '--with-filename',
-      '--line-number',
-      '--column',
-      '--smart-case',
-    }
-
-    -- Añadir patrón de búsqueda
-    if search_pattern and search_pattern ~= '' then
-      table.insert(command, '-e')
-      table.insert(command, search_pattern)
-    else
-      return MiniPick.set_picker_items({}, set_items_opts)
-    end
-
-    -- Añadir filtro de archivo si se proporciona
-    if file_pattern and file_pattern ~= '' then
-      table.insert(command, '-g')
-      -- Usar shortcut si existe, sino usar el patrón directamente
-      local pattern = shortcuts[file_pattern] or file_pattern
-      table.insert(command, pattern)
-    end
-
-    -- Ejecutar ripgrep y procesar resultados
-    process = MiniPick.set_picker_items_from_cli(command, {
-      postprocess = function(lines)
-        local results = {}
-        for _, line in ipairs(lines) do
-          if line ~= '' then
-            local file, lnum, col, text = line:match '([^:]+):(%d+):(%d+):(.*)'
-            if file then
-              results[#results + 1] = {
-                path = file,
-                lnum = tonumber(lnum),
-                col = tonumber(col),
-                text = line,
-              }
-            end
-          end
-        end
-        return results
-      end,
-      set_items_opts = set_items_opts,
-      spawn_opts = spawn_opts,
-    })
-  end
-
-  MiniPick.start {
-    source = {
-      cwd = cwd,
-      items = {},
-      name = 'Multi Grep (with shortcuts)',
-      match = match,
-      show = function(buf_id, items_to_show, query)
-        MiniPick.default_show(buf_id, items_to_show, query, { show_icons = true })
-      end,
-      choose = MiniPick.default_choose,
-    },
-  }
+  MiniPick.builtin.files({ tool = 'fd' }, { source = { cwd = root.global_root() } })
 end
 
 --- Global live grep
@@ -128,23 +57,9 @@ function M.global_grep()
   MiniPick.builtin.grep_live({}, { source = { cwd = root.global_root() } })
 end
 
---- Git status picker (modified files)
-function M.git_status()
-  local git_utils = require 'utils.git'
-  local repo_path = git_utils.get_git_repo_path()
-  if not repo_path then
-    vim.notify('Not in a Git repository', vim.log.levels.WARN)
-    return
-  end
-
-  local MiniExtra = require 'mini.extra'
-  MiniExtra.pickers.git_files({ scope = 'modified' }, { source = { cwd = repo_path } })
-end
-
 --- Git stash picker with apply/pop/drop actions
 function M.git_stash()
-  local git_utils = require 'utils.git'
-  local repo_path = git_utils.get_git_repo_path()
+  local repo_path = root.git_root()
   if not repo_path then
     vim.notify('Not in a Git repository', vim.log.levels.WARN)
     return
@@ -216,4 +131,292 @@ function M.git_stash()
   }
 end
 
+--- Git status picker (all changed files: modified, staged, untracked, deleted)
+function M.git_branch_files()
+  local repo_path = root.git_root() or root.git_root(vim.fn.getcwd())
+  if not repo_path then
+    vim.notify('Not in a Git repository', vim.log.levels.WARN)
+    return
+  end
+
+  local output = vim.fn.systemlist({ 'git', '-C', repo_path, 'status', '--porcelain' })
+  if vim.v.shell_error ~= 0 or #output == 0 then
+    vim.notify('Working tree clean', vim.log.levels.INFO)
+    return
+  end
+
+  -- git status --porcelain format: XY filename
+  -- X = index (staged), Y = worktree (unstaged)
+  local status_labels = {
+    ['M'] = 'Modified',
+    ['A'] = 'Added',
+    ['D'] = 'Deleted',
+    ['R'] = 'Renamed',
+    ['C'] = 'Copied',
+    ['?'] = 'Untracked',
+    ['U'] = 'Conflict',
+  }
+
+  local items = {}
+  for _, line in ipairs(output) do
+    local xy = line:sub(1, 2)
+    local filepath = line:sub(4)
+    local index_status = xy:sub(1, 1)
+    local worktree_status = xy:sub(2, 2)
+
+    -- Handle renamed: "R  old -> new"
+    local display_path = filepath
+    if index_status == 'R' or worktree_status == 'R' then
+      local _, new_path = filepath:match('^(.+) %-> (.+)$')
+      if new_path then display_path = new_path end
+    end
+
+    -- Skip directories
+    local full_path = repo_path .. '/' .. display_path
+    if vim.fn.isdirectory(full_path) == 1 then
+      goto continue
+    end
+
+    -- Build label showing stage state
+    local parts = {}
+    if index_status ~= ' ' and index_status ~= '?' then
+      table.insert(parts, 'Staged:' .. (status_labels[index_status] or index_status))
+    end
+    if worktree_status ~= ' ' and worktree_status ~= '?' then
+      table.insert(parts, status_labels[worktree_status] or worktree_status)
+    end
+    if index_status == '?' then
+      table.insert(parts, 'Untracked')
+    end
+    local label = table.concat(parts, ' | ')
+
+    items[#items + 1] = {
+      text = string.format('[%s] %s', label, display_path),
+      path = repo_path .. '/' .. display_path,
+      index = index_status,
+      worktree = worktree_status,
+    }
+    ::continue::
+  end
+
+  local MiniPick = require 'mini.pick'
+  MiniPick.start({
+    source = {
+      cwd = repo_path,
+      items = items,
+      name = 'Git Status',
+      show = function(buf_id, items_to_show, query)
+        MiniPick.default_show(buf_id, items_to_show, query, { show_icons = true })
+      end,
+      preview = function(buf_id, item)
+        local diff_cmd
+        if item.index ~= ' ' and item.index ~= '?' then
+          -- Show staged diff
+          diff_cmd = { 'git', '-C', repo_path, 'diff', '--cached', '--', item.path }
+        elseif item.worktree == '?' then
+          -- Untracked: show file contents
+          local ok, lines = pcall(vim.fn.readfile, item.path, '', 200)
+          if not ok or not lines then
+            vim.api.nvim_buf_set_lines(buf_id, 0, -1, false, { '(Cannot read file)' })
+            return
+          end
+          -- Sanitize lines that contain embedded newlines (binary files)
+          for i, line in ipairs(lines) do
+            if line:find('\n') then lines[i] = line:gsub('\n', '') end
+          end
+          vim.api.nvim_buf_set_lines(buf_id, 0, -1, false, lines)
+          local ft = vim.filetype.match({ filename = item.path }) or ''
+          vim.bo[buf_id].filetype = ft
+          return
+        else
+          -- Show unstaged diff
+          diff_cmd = { 'git', '-C', repo_path, 'diff', '--', item.path }
+        end
+        local diff_output = vim.fn.systemlist(diff_cmd)
+        for i, line in ipairs(diff_output) do
+          if line:find('\n') then diff_output[i] = line:gsub('\n', '') end
+        end
+        vim.api.nvim_buf_set_lines(buf_id, 0, -1, false, diff_output)
+        vim.bo[buf_id].filetype = 'diff'
+      end,
+      choose = function(item)
+        if not item then return end
+        if item.worktree == 'D' and item.index == ' ' then
+          vim.notify('File was deleted: ' .. item.path, vim.log.levels.INFO)
+          return
+        end
+        MiniPick.default_choose(item)
+      end,
+    },
+  })
+end
+
+--- Repo picker - select from available git repositories under global root
+-- Enter=files, C-o=explorer, C-g=lazygit, C-b=branches, C-s=status
+function M.repo_picker()
+  local repos = get_repos()
+  if #repos == 0 then
+    vim.notify('No git repositories found under ' .. root.global_root(), vim.log.levels.WARN)
+    return
+  end
+
+  local items = {}
+  for _, repo in ipairs(repos) do
+    items[#items + 1] = format_repo_item(repo)
+  end
+
+  local MiniPick = require 'mini.pick'
+
+  --- Helper to get current item and close picker
+  local function pick_item_and_stop()
+    local matches = MiniPick.get_picker_matches()
+    if not matches or not matches.current then return nil end
+    local item = matches.current
+    MiniPick.stop()
+    return item
+  end
+
+  MiniPick.start({
+    source = {
+      items = items,
+      name = 'Repos (CR=files C-o=explore C-g=lazygit C-b=branch C-s=status)',
+
+      show = function(buf_id, items_to_show, query)
+        MiniPick.default_show(buf_id, items_to_show, query, { show_icons = true })
+      end,
+
+      preview = function(buf_id, item)
+        if not item then return end
+        local status_output = vim.fn.systemlist({ 'git', '-C', item.path, 'status', '--short' })
+
+        local lines = {
+          'Repository: ' .. item.relative,
+          'Path:       ' .. item.path,
+          'Branch:     ' .. item.branch,
+          '',
+          'Status:',
+          '-------',
+        }
+
+        if vim.v.shell_error == 0 and #status_output > 0 then
+          vim.list_extend(lines, status_output)
+        else
+          lines[#lines + 1] = '(clean)'
+        end
+
+        vim.api.nvim_buf_set_lines(buf_id, 0, -1, false, lines)
+        vim.bo[buf_id].filetype = 'git'
+      end,
+
+      choose = function(item)
+        if not item then return end
+        MiniPick.builtin.files({}, { source = { cwd = item.path } })
+      end,
+    },
+
+    mappings = {
+      open_explorer = {
+        char = '<C-o>',
+        func = function()
+          local item = pick_item_and_stop()
+          if not item then return end
+          vim.schedule(function() MiniFiles.open(item.path) end)
+        end,
+      },
+
+      open_lazygit = {
+        char = '<C-g>',
+        func = function()
+          local item = pick_item_and_stop()
+          if not item then return end
+          vim.schedule(function()
+            require('utils.float-term').lazygit(item.path)
+          end)
+        end,
+      },
+
+      show_branches = {
+        char = '<C-b>',
+        func = function()
+          local item = pick_item_and_stop()
+          if not item then return end
+          vim.schedule(function()
+            local git = require('utils.git')
+            local branches = git.get_recent_branches(item.path)
+            MiniPick.start({
+              source = {
+                cwd = item.path,
+                items = branches,
+                name = 'Branches [' .. item.relative .. ']',
+                choose = function(branch)
+                  if branch then git.switch_branch(branch, item.path) end
+                end,
+              },
+            })
+          end)
+        end,
+      },
+
+      show_status = {
+        char = '<C-s>',
+        func = function()
+          local item = pick_item_and_stop()
+          if not item then return end
+          vim.schedule(function()
+            local output = vim.fn.systemlist({ 'git', '-C', item.path, 'status', '--porcelain' })
+            if vim.v.shell_error ~= 0 or #output == 0 then
+              vim.notify('[' .. item.relative .. '] Working tree clean', vim.log.levels.INFO)
+              return
+            end
+
+            local status_labels = {
+              ['M'] = 'Modified', ['A'] = 'Added', ['D'] = 'Deleted',
+              ['R'] = 'Renamed', ['?'] = 'Untracked', ['U'] = 'Conflict',
+            }
+
+            local status_items = {}
+            for _, line in ipairs(output) do
+              local xy = line:sub(1, 2)
+              local filepath = line:sub(4)
+              local idx, wt = xy:sub(1, 1), xy:sub(2, 2)
+
+              local parts = {}
+              if idx ~= ' ' and idx ~= '?' then
+                parts[#parts + 1] = 'Staged:' .. (status_labels[idx] or idx)
+              end
+              if wt ~= ' ' and wt ~= '?' then
+                parts[#parts + 1] = status_labels[wt] or wt
+              end
+              if idx == '?' then
+                parts[#parts + 1] = 'Untracked'
+              end
+
+              status_items[#status_items + 1] = {
+                text = string.format('[%s] %s', table.concat(parts, ' | '), filepath),
+                path = filepath,
+              }
+            end
+
+            MiniPick.start({
+              source = {
+                cwd = item.path,
+                items = status_items,
+                name = 'Status [' .. item.relative .. ']',
+                show = function(buf_id, items_to_show, query)
+                  MiniPick.default_show(buf_id, items_to_show, query, { show_icons = true })
+                end,
+                choose = function(selected)
+                  if not selected then return end
+                  vim.cmd('edit ' .. vim.fn.fnameescape(item.path .. '/' .. selected.path))
+                end,
+              },
+            })
+          end)
+        end,
+      },
+    },
+  })
+end
+
 return M
+

@@ -55,36 +55,36 @@ local now_if_args = _G.Config.now_if_args
 -- - `:h MiniBasics.config.mappings` - list of created mappings
 -- - `:h MiniBasics.config.autocommands` - list of created autocommands
 now(function()
-  require('mini.basics').setup({
-    -- Manage options in 'plugin/10_options.lua' for didactic purposes
-    options = { basic = false },
-    mappings = {
-      -- Create `<C-hjkl>` mappings for window navigation
-      windows = true,
-      -- Create `<M-hjkl>` mappings for navigation in Insert and Command modes
-      move_with_alt = true,
-    },
-  })
+	require("mini.basics").setup({
+		-- Manage options in 'plugin/10_options.lua' for didactic purposes
+		options = { basic = false },
+		mappings = {
+			-- Create `<C-hjkl>` mappings for window navigation
+			windows = false,
+			-- Create `<M-hjkl>` mappings for navigation in Insert and Command modes
+			move_with_alt = true,
+		},
+	})
 end)
 
 -- Icon provider. Usually no need to use manually. It is used by plugins like
 -- 'mini.pick', 'mini.files', 'mini.statusline', and others.
 now(function()
-  -- Set up to not prefer extension-based icon for some extensions
-  local ext3_blocklist = { scm = true, txt = true, yml = true }
-  local ext4_blocklist = { json = true, yaml = true }
-  require('mini.icons').setup({
-    use_file_extension = function(ext, _)
-      return not (ext3_blocklist[ext:sub(-3)] or ext4_blocklist[ext:sub(-4)])
-    end,
-  })
+	-- Set up to not prefer extension-based icon for some extensions
+	local ext3_blocklist = { scm = true, txt = true, yml = true }
+	local ext4_blocklist = { json = true, yaml = true }
+	require("mini.icons").setup({
+		use_file_extension = function(ext, _)
+			return not (ext3_blocklist[ext:sub(-3)] or ext4_blocklist[ext:sub(-4)])
+		end,
+	})
 
-  -- Mock 'nvim-tree/nvim-web-devicons' for plugins without 'mini.icons' support.
-  -- Not needed for 'mini.nvim' or MiniMax, but might be useful for others.
-  later(MiniIcons.mock_nvim_web_devicons)
+	-- Mock 'nvim-tree/nvim-web-devicons' for plugins without 'mini.icons' support.
+	-- Not needed for 'mini.nvim' or MiniMax, but might be useful for others.
+	later(MiniIcons.mock_nvim_web_devicons)
 
-  -- Add LSP kind icons. Useful for completion plugins.
-  later(MiniIcons.tweak_lsp_kind)
+	-- Add LSP kind icons. Useful for completion plugins.
+	later(MiniIcons.tweak_lsp_kind)
 end)
 
 -- Miscellaneous small but useful functions. Example usage:
@@ -97,21 +97,21 @@ end)
 --
 -- Uses `now()` for `setup_xxx()` to work when started like `nvim -- path/to/file`
 now_if_args(function()
-  -- Makes `:h MiniMisc.put()` and `:h MiniMisc.put_text()` public
-  require('mini.misc').setup()
+	-- Makes `:h MiniMisc.put()` and `:h MiniMisc.put_text()` public
+	require("mini.misc").setup()
 
-  -- Change current working directory based on the current file path. It
-  -- searches up the file tree until the first root marker ('.git' or 'Makefile')
-  -- and sets their parent directory as a current directory.
-  -- This is helpful when simultaneously dealing with files from several projects.
-  MiniMisc.setup_auto_root()
+	-- Change current working directory based on the current file path. It
+	-- searches up the file tree until the first root marker ('.git' or 'Makefile')
+	-- and sets their parent directory as a current directory.
+	-- This is helpful when simultaneously dealing with files from several projects.
+	MiniMisc.setup_auto_root()
 
-  -- Restore latest cursor position on file open
-  MiniMisc.setup_restore_cursor()
+	-- Restore latest cursor position on file open
+	MiniMisc.setup_restore_cursor()
 
-  -- Synchronize terminal emulator background with Neovim's background to remove
-  -- possibly different color padding around Neovim instance
-  MiniMisc.setup_termbg_sync()
+	-- Synchronize terminal emulator background with Neovim's background to remove
+	-- possibly different color padding around Neovim instance
+	MiniMisc.setup_termbg_sync()
 end)
 
 -- Notifications provider. Shows all kinds of notifications in the upper right
@@ -121,7 +121,9 @@ end)
 --
 -- See also:
 -- - `:h MiniNotify.config` for some of common configuration examples.
-now(function() require('mini.notify').setup() end)
+now(function()
+	require("mini.notify").setup()
+end)
 
 -- Session management. A thin wrapper around `:h mksession` that consistently
 -- manages session files. Example usage:
@@ -129,23 +131,23 @@ now(function() require('mini.notify').setup() end)
 -- - `<Leader>sr` - read previously started session
 -- - `<Leader>sd` - delete previously started session
 now(function()
-  require('mini.sessions').setup({
-    directory = vim.fn.stdpath('data') .. '/sessions',
-    autowrite = true,
-    hooks = {
-      pre = {
-        write = function()
-          -- Cerrar buffers temporales antes de guardar sesión
-          for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-            local bt = vim.bo[buf].buftype
-            if bt == 'terminal' or bt == 'nofile' then
-              pcall(vim.api.nvim_buf_delete, buf, { force = true })
-            end
-          end
-        end,
-      },
-    },
-  })
+	require("mini.sessions").setup({
+		directory = vim.fn.stdpath("data") .. "/sessions",
+		autowrite = true,
+		hooks = {
+			pre = {
+				write = function()
+					-- Cerrar buffers temporales antes de guardar sesión
+					for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+						local bt = vim.bo[buf].buftype
+						if bt == "terminal" or bt == "nofile" then
+							pcall(vim.api.nvim_buf_delete, buf, { force = true })
+						end
+					end
+				end,
+			},
+		},
+	})
 end)
 
 -- Start screen. This is what is shown when you open Neovim like `nvim`.
@@ -157,7 +159,9 @@ end)
 -- See also:
 -- - `:h MiniStarter-example-config` - non-default config examples
 -- - `:h MiniStarter-lifecycle` - how to work with Starter buffer
-now(function() require('mini.starter').setup() end)
+now(function()
+	require("mini.starter").setup()
+end)
 
 -- Statusline. Sets `:h 'statusline'` to show more info in a line below window.
 -- Example usage:
@@ -172,11 +176,61 @@ now(function() require('mini.starter').setup() end)
 --   configure a custom statusline by setting `config.content.active` function.
 -- Git info (branch, ahead/behind, conflicts) is shown via minigit_summary_string
 -- which is formatted in the mini.git setup below to include all this info.
-now(function() require('mini.statusline').setup() end)
+now(function()
+	require("mini.statusline").setup({
+		content = {
+			active = function()
+				local MiniStatusline = require("mini.statusline")
+				local mode, mode_hl = MiniStatusline.section_mode({ trunc_width = 120 })
+				local git = MiniStatusline.section_git({ trunc_width = 40 })
+				local diff = MiniStatusline.section_diff({ trunc_width = 75 })
+				local diagnostics = MiniStatusline.section_diagnostics({ trunc_width = 75 })
+				local lsp = MiniStatusline.section_lsp({ trunc_width = 75 })
+				local filename = MiniStatusline.section_filename({ trunc_width = 140 })
+				local fileinfo = MiniStatusline.section_fileinfo({ trunc_width = 120 })
+				local location = MiniStatusline.section_location({ trunc_width = 75 })
+				local search = MiniStatusline.section_searchcount({ trunc_width = 75 })
+
+				-- CodeCompanion: show model and mode in chat buffers
+				local cc_info = ""
+				local meta = _G.codecompanion_chat_metadata
+				if meta then
+					local bufnr = vim.api.nvim_get_current_buf()
+					local m = meta[bufnr]
+					if m then
+						local parts = {}
+						if m.adapter and m.adapter.model then
+							table.insert(parts, m.adapter.model)
+						end
+						if m.mode and m.mode.name then
+							table.insert(parts, m.mode.name)
+						end
+						if #parts > 0 then
+							cc_info = table.concat(parts, " | ")
+						end
+					end
+				end
+
+				return MiniStatusline.combine_groups({
+					{ hl = mode_hl, strings = { mode } },
+					{ hl = "MiniStatuslineDevinfo", strings = { git, diff, diagnostics, lsp } },
+					"%<",
+					{ hl = "MiniStatuslineFilename", strings = { filename } },
+					"%=",
+					{ hl = "MiniStatuslineDevinfo", strings = { cc_info } },
+					{ hl = "MiniStatuslineFileinfo", strings = { fileinfo } },
+					{ hl = mode_hl, strings = { search, location } },
+				})
+			end,
+		},
+	})
+end)
 
 -- Tabline. Sets `:h 'tabline'` to show all listed buffers in a line at the top.
 -- Buffers are ordered as they were created. Navigate with `[b` and `]b`.
-now(function() require('mini.tabline').setup() end)
+now(function()
+	require("mini.tabline").setup()
+end)
 
 -- Step two ===================================================================
 
@@ -187,7 +241,9 @@ now(function() require('mini.tabline').setup() end)
 --   Calling `setup()` makes 'mini.pick' respect 'mini.extra' pickers.
 -- - `:h MiniExtra.gen_ai_spec` - 'mini.ai' textobject specifications
 -- - `:h MiniExtra.gen_highlighter` - 'mini.hipatterns' highlighters
-later(function() require('mini.extra').setup() end)
+later(function()
+	require("mini.extra").setup()
+end)
 
 -- Extend and create a/i textobjects, like `:h a(`, `:h a'`, and more).
 -- Contains not only `a` and `i` type of textobjects, but also their "next" and
@@ -206,26 +262,26 @@ later(function() require('mini.extra').setup() end)
 -- - `:h MiniAi-builtin-textobjects` - list of all supported textobjects
 -- - `:h MiniAi-textobject-specification` - examples of custom textobjects
 later(function()
-  local ai = require('mini.ai')
-  ai.setup({
-    -- 'mini.ai' can be extended with custom textobjects
-    custom_textobjects = {
-      -- Make `aB` / `iB` act on around/inside whole *b*uffer
-      B = MiniExtra.gen_ai_spec.buffer(),
-      -- For more complicated textobjects that require structural awareness,
-      -- use tree-sitter. This example makes `aF`/`iF` mean around/inside function
-      -- definition (not call). See `:h MiniAi.gen_spec.treesitter()` for details.
-      F = ai.gen_spec.treesitter({ a = '@function.outer', i = '@function.inner' }),
-    },
+	local ai = require("mini.ai")
+	ai.setup({
+		-- 'mini.ai' can be extended with custom textobjects
+		custom_textobjects = {
+			-- Make `aB` / `iB` act on around/inside whole *b*uffer
+			B = MiniExtra.gen_ai_spec.buffer(),
+			-- For more complicated textobjects that require structural awareness,
+			-- use tree-sitter. This example makes `aF`/`iF` mean around/inside function
+			-- definition (not call). See `:h MiniAi.gen_spec.treesitter()` for details.
+			F = ai.gen_spec.treesitter({ a = "@function.outer", i = "@function.inner" }),
+		},
 
-    -- 'mini.ai' by default mostly mimics built-in search behavior: first try
-    -- to find textobject covering cursor, then try to find to the right.
-    -- Although this works in most cases, some are confusing. It is more robust to
-    -- always try to search only covering textobject and explicitly ask to search
-    -- for next (`an`/`in`) or last (`al`/`il`).
-    -- Try this. If you don't like it - delete next line and this comment.
-    search_method = 'cover',
-  })
+		-- 'mini.ai' by default mostly mimics built-in search behavior: first try
+		-- to find textobject covering cursor, then try to find to the right.
+		-- Although this works in most cases, some are confusing. It is more robust to
+		-- always try to search only covering textobject and explicitly ask to search
+		-- for next (`an`/`in`) or last (`al`/`il`).
+		-- Try this. If you don't like it - delete next line and this comment.
+		search_method = "cover",
+	})
 end)
 
 -- Align text interactively. Example usage:
@@ -238,7 +294,9 @@ end)
 -- - `:h MiniAlign-example` - hands-on list of examples to practice aligning
 -- - `:h MiniAlign.gen_step` - list of support step customizations
 -- - `:h MiniAlign-algorithm` - how alignment is done on algorithmic level
-later(function() require('mini.align').setup() end)
+later(function()
+	require("mini.align").setup()
+end)
 
 -- Animate common Neovim actions. Like cursor movement, scroll, window resize,
 -- window open, window close. Animations are done based on Neovim events and
@@ -259,14 +317,18 @@ later(function() require('mini.align').setup() end)
 --
 -- See also:
 -- - `:h MiniBracketed` - overall mapping design and list of targets
-later(function() require('mini.bracketed').setup() end)
+later(function()
+	require("mini.bracketed").setup()
+end)
 
 -- Remove buffers. Opened files occupy space in tabline and buffer picker.
 -- When not needed, they can be removed. Example usage:
 -- - `<Leader>bw` - completely wipeout current buffer (see `:h :bwipeout`)
 -- - `<Leader>bW` - completely wipeout current buffer even if it has changes
 -- - `<Leader>bd` - delete current buffer (see `:h :bdelete`)
-later(function() require('mini.bufremove').setup() end)
+later(function()
+	require("mini.bufremove").setup()
+end)
 
 -- Show next key clues in a bottom right window. Requires explicit opt-in for
 -- keys that act as clue trigger. Example usage:
@@ -285,7 +347,7 @@ later(function() require('mini.bufremove').setup() end)
 -- - `:h MiniClue.ensure_buf_triggers()` - use it to enable triggers in buffer
 -- - `:h MiniClue.set_mapping_desc()` - change mapping description not from config
 later(function()
-  local miniclue = require('mini.clue')
+	local miniclue = require("mini.clue")
   -- stylua: ignore
   miniclue.setup({
     -- Define which clues to show. By default shows only clues for custom mappings
@@ -356,14 +418,18 @@ end)
 --
 -- The built-in `:h commenting` is based on 'mini.comment'. Yet this module is
 -- still enabled as it provides more customization opportunities.
-later(function() require('mini.comment').setup() end)
+later(function()
+	require("mini.comment").setup()
+end)
 
 -- Autohighlight word under cursor with a customizable delay.
 -- Word boundaries are defined based on `:h 'iskeyword'` option.
 --
 -- It is not enabled by default because its effects are a matter of taste.
 -- Uncomment next line (use `gcc`) to enable.
-later(function() require('mini.cursorword').setup() end)
+later(function()
+	require("mini.cursorword").setup()
+end)
 
 -- Work with diff hunks that represent the difference between the buffer text and
 -- some reference text set by a source. Default source uses text from Git index.
@@ -379,7 +445,9 @@ later(function() require('mini.cursorword').setup() end)
 -- - `:h MiniDiff-overview` - overview of how module works
 -- - `:h MiniDiff-diff-summary` - available summary information
 -- - `:h MiniDiff.gen_source` - available built-in sources
-later(function() require('mini.diff').setup() end)
+later(function()
+	require("mini.diff").setup()
+end)
 
 -- Navigate and manipulate file system
 --
@@ -411,19 +479,19 @@ later(function() require('mini.diff').setup() end)
 -- - `:h MiniFiles-manipulation` - more details about how to manipulate
 -- - `:h MiniFiles-examples` - examples of common setups
 later(function()
-  -- Enable directory/file preview
-  require('mini.files').setup({ windows = { preview = true } })
+	-- Enable directory/file preview
+	require("mini.files").setup({ windows = { preview = true } })
 
-  -- Add common bookmarks for every explorer. Example usage inside explorer:
-  -- - `'c` to navigate into your config directory
-  -- - `g?` to see available bookmarks
-  local add_marks = function()
-    MiniFiles.set_bookmark('c', vim.fn.stdpath('config'), { desc = 'Config' })
-    local minideps_plugins = vim.fn.stdpath('data') .. '/site/pack/deps/opt'
-    MiniFiles.set_bookmark('p', minideps_plugins, { desc = 'Plugins' })
-    MiniFiles.set_bookmark('w', vim.fn.getcwd, { desc = 'Working directory' })
-  end
-  _G.Config.new_autocmd('User', 'MiniFilesExplorerOpen', add_marks, 'Add bookmarks')
+	-- Add common bookmarks for every explorer. Example usage inside explorer:
+	-- - `'c` to navigate into your config directory
+	-- - `g?` to see available bookmarks
+	local add_marks = function()
+		MiniFiles.set_bookmark("c", vim.fn.stdpath("config"), { desc = "Config" })
+		local minideps_plugins = vim.fn.stdpath("data") .. "/site/pack/deps/opt"
+		MiniFiles.set_bookmark("p", minideps_plugins, { desc = "Plugins" })
+		MiniFiles.set_bookmark("w", vim.fn.getcwd(), { desc = "Working directory" })
+	end
+	_G.Config.new_autocmd("User", "MiniFilesExplorerOpen", add_marks, "Add bookmarks")
 end)
 
 -- Git integration for more straightforward Git actions based on Neovim's state.
@@ -438,97 +506,100 @@ end)
 -- - `:h MiniGit-examples` - examples of common setups
 -- - `:h :Git` - more details about `:Git` user command
 -- - `:h MiniGit.show_at_cursor()` - what information at cursor is shown
-later(
-  function()
-    require('mini.git').setup()
+later(function()
+	require("mini.git").setup()
 
-    -- Format git summary string to include:
-    -- - Branch name
-    -- - Ahead/behind remote (↑N ↓M)
-    -- - In-progress actions (merge, rebase, etc.)
-    -- - Conflict count in current buffer (⚠N)
-    local format_summary = function(data)
-      local summary = vim.b[data.buf].minigit_summary
-      if not summary then return end
+	-- Format git summary string to include:
+	-- - Branch name
+	-- - Ahead/behind remote (↑N ↓M)
+	-- - In-progress actions (merge, rebase, etc.)
+	-- - Conflict count in current buffer (⚠N)
+	local format_summary = function(data)
+		local summary = vim.b[data.buf].minigit_summary
+		if not summary then
+			return
+		end
 
-      local parts = {}
+		local parts = {}
 
-      -- Branch name
-      if summary.head_name then
-        table.insert(parts, summary.head_name)
-      end
+		-- Branch name
+		if summary.head_name then
+			table.insert(parts, summary.head_name)
+		end
 
-      -- Ahead/behind from remote
-      local git_utils = require('utils.git')
-      local status = git_utils.get_ahead_behind()
-      if status.ahead > 0 then
-        table.insert(parts, '↑' .. status.ahead)
-      end
-      if status.behind > 0 then
-        table.insert(parts, '↓' .. status.behind)
-      end
+		-- Ahead/behind from remote
+		local git_utils = require("utils.git")
+		local status = git_utils.get_ahead_behind()
+		if status.ahead > 0 then
+			table.insert(parts, "↑" .. status.ahead)
+		end
+		if status.behind > 0 then
+			table.insert(parts, "↓" .. status.behind)
+		end
 
-      -- In-progress actions (merge, rebase, cherry-pick, etc.)
-      if summary.in_progress and summary.in_progress ~= '' then
-        table.insert(parts, '[' .. summary.in_progress .. ']')
-      end
+		-- In-progress actions (merge, rebase, cherry-pick, etc.)
+		if summary.in_progress and summary.in_progress ~= "" then
+			table.insert(parts, "[" .. summary.in_progress .. "]")
+		end
 
-      -- Conflict count in current buffer
-      local conflicts = git_utils.count_conflicts(data.buf)
-      if conflicts > 0 then
-        table.insert(parts, '⚠' .. conflicts)
-      end
+		-- Conflict count in current buffer
+		local conflicts = git_utils.count_conflicts(data.buf)
+		if conflicts > 0 then
+			table.insert(parts, "⚠" .. conflicts)
+		end
 
-      -- status
-      if summary.status then
-        table.insert(parts, summary.status)
-      end
+		-- status
+		if summary.status then
+			table.insert(parts, summary.status)
+		end
 
+		vim.b[data.buf].minigit_summary_string = table.concat(parts, " ")
+	end
 
-      vim.b[data.buf].minigit_summary_string = table.concat(parts, ' ')
-    end
+	_G.Config.new_autocmd("User", "MiniGitUpdated", format_summary, "Format git summary with ahead/behind")
 
-    _G.Config.new_autocmd('User', 'MiniGitUpdated', format_summary, 'Format git summary with ahead/behind')
+	-- Invalidate ahead/behind cache on git updates and refresh status
+	_G.Config.new_autocmd("User", "MiniGitUpdated", function()
+		require("utils.git").invalidate_cache()
+	end, "Invalidate git status cache")
 
-    -- Invalidate ahead/behind cache on git updates and refresh status
-    _G.Config.new_autocmd('User', 'MiniGitUpdated', function()
-      require('utils.git').invalidate_cache()
-    end, 'Invalidate git status cache')
+	-- Start auto-fetch when entering a git repo (runs every 5 minutes)
+	-- Initial fetch happens immediately to show accurate ahead/behind
+	_G.Config.new_autocmd("User", "MiniGitUpdated", function()
+		local git = require("utils.git")
+		-- Only start if not already running
+		if not git._fetch_timer then
+			git.start_auto_fetch(1)
+		end
+	end, "Start background git fetch")
 
-    -- Start auto-fetch when entering a git repo (runs every 5 minutes)
-    -- Initial fetch happens immediately to show accurate ahead/behind
-    _G.Config.new_autocmd('User', 'MiniGitUpdated', function()
-      local git = require('utils.git')
-      -- Only start if not already running
-      if not git._fetch_timer then
-        git.start_auto_fetch(1)
-      end
-    end, 'Start background git fetch')
+	local align_blame = function(au_data)
+		-- Only proceed if this is a blame command
+		if not au_data.data or au_data.data.git_subcommand ~= "blame" then
+			return
+		end
 
-    local align_blame = function(au_data)
-      -- Only proceed if this is a blame command
-      if not au_data.data or au_data.data.git_subcommand ~= 'blame' then return end
+		local win_src = au_data.data.win_source
+		-- Verify we have a valid source window
+		if not win_src or not vim.api.nvim_win_is_valid(win_src) then
+			return
+		end
 
-      local win_src = au_data.data.win_source
-      -- Verify we have a valid source window
-      if not win_src or not vim.api.nvim_win_is_valid(win_src) then return end
+		-- Get the current window (should be the git split window)
+		local win_git = vim.api.nvim_get_current_win()
 
-      -- Get the current window (should be the git split window)
-      local win_git = vim.api.nvim_get_current_win()
+		-- Configure the git blame window
+		vim.wo[win_git].wrap = false
+		vim.fn.winrestview({ topline = vim.fn.line("w0", win_src) })
+		vim.api.nvim_win_set_cursor(win_git, { vim.fn.line(".", win_src), 0 })
 
-      -- Configure the git blame window
-      vim.wo[win_git].wrap = false
-      vim.fn.winrestview({ topline = vim.fn.line('w0', win_src) })
-      vim.api.nvim_win_set_cursor(win_git, { vim.fn.line('.', win_src), 0 })
+		-- Bind both windows so that they scroll together
+		vim.wo[win_src].scrollbind = true
+		vim.wo[win_git].scrollbind = true
+	end
 
-      -- Bind both windows so that they scroll together
-      vim.wo[win_src].scrollbind = true
-      vim.wo[win_git].scrollbind = true
-    end
-
-    _G.Config.new_autocmd('User', 'MiniGitCommandSplit', align_blame, 'Align blame output with source')
-  end
-)
+	_G.Config.new_autocmd("User", "MiniGitCommandSplit", align_blame, "Align blame output with source")
+end)
 
 -- Highlight patterns in text. Like `TODO`/`NOTE` or color hex codes.
 -- Example usage:
@@ -537,89 +608,98 @@ later(
 -- See also:
 -- - `:h MiniHipatterns-examples` - examples of common setups
 -- Limpiar cache de Tailwind cuando cambia el colorscheme
-_G.Config.new_autocmd('ColorScheme', '*', function()
-  require('utils.tailwind-colors').reset_cache()
-end, 'Reset Tailwind highlight cache on colorscheme change')
+_G.Config.new_autocmd("ColorScheme", "*", function()
+	require("utils.tailwind-colors").reset_cache()
+end, "Reset Tailwind highlight cache on colorscheme change")
 
 later(function()
-  local hipatterns = require('mini.hipatterns')
-  local hi_words = MiniExtra.gen_highlighter.words
-  hipatterns.setup({
-    highlighters = {
-      -- Highlight a fixed set of common words. Will be highlighted in any place,
-      -- not like "only in comments".
-      fixme = hi_words({ 'FIXME', 'Fixme', 'fixme' }, 'MiniHipatternsFixme'),
-      hack = hi_words({ 'HACK', 'Hack', 'hack' }, 'MiniHipatternsHack'),
-      todo = hi_words({ 'TODO', 'Todo', 'todo' }, 'MiniHipatternsTodo'),
-      note = hi_words({ 'NOTE', 'Note', 'note' }, 'MiniHipatternsNote'),
+	local hipatterns = require("mini.hipatterns")
+	local hi_words = MiniExtra.gen_highlighter.words
+	hipatterns.setup({
+		highlighters = {
+			-- Highlight a fixed set of common words. Will be highlighted in any place,
+			-- not like "only in comments".
+			fixme = hi_words({ "FIXME", "Fixme", "fixme" }, "MiniHipatternsFixme"),
+			hack = hi_words({ "HACK", "Hack", "hack" }, "MiniHipatternsHack"),
+			todo = hi_words({ "TODO", "Todo", "todo" }, "MiniHipatternsTodo"),
+			note = hi_words({ "NOTE", "Note", "note" }, "MiniHipatternsNote"),
 
-      -- Highlight hex color string (#aabbcc) with that color as a background
-      hex_color = hipatterns.gen_highlighter.hex_color(),
+			-- Highlight hex color string (#aabbcc) with that color as a background
+			hex_color = hipatterns.gen_highlighter.hex_color(),
 
-      -- Highlight Tailwind CSS color classes
-      tailwind = {
-        pattern = function()
-          -- Solo activar en archivos web
-          local ft = vim.bo.filetype
-          local allowed = {
-            "html", "css", "scss", "less",
-            "javascript", "javascriptreact", "typescript", "typescriptreact",
-            "vue", "svelte", "astro", }
-          if not vim.tbl_contains(allowed, ft) then
-            return nil
-          end
-          -- Detecta: prefijo-color-tonalidad (ej: text-blue-500, bg-red-600/50)
-          return "%f[%w:-]()[%w:-]+%-[a-z%-]+%-%d+/?%d*()%f[^%w:-]"
-        end,
+			-- Highlight Tailwind CSS color classes
+			tailwind = {
+				pattern = function()
+					-- Solo activar en archivos web
+					local ft = vim.bo.filetype
+					local allowed = {
+						"html",
+						"css",
+						"scss",
+						"less",
+						"javascript",
+						"javascriptreact",
+						"typescript",
+						"typescriptreact",
+						"vue",
+						"svelte",
+						"astro",
+					}
+					if not vim.tbl_contains(allowed, ft) then
+						return nil
+					end
+					-- Detecta: prefijo-color-tonalidad (ej: text-blue-500, bg-red-600/50)
+					return "%f[%w:-]()[%w:-]+%-[a-z%-]+%-%d+/?%d*()%f[^%w:-]"
+				end,
 
-        group = function(_, _, match_data)
-          local match = match_data.full_match
-          -- Extraer color y tonalidad
-          local color, shade = match:match("[%w-]+%-([a-z%-]+)%-(%d+)")
-          shade = tonumber(shade)
+				group = function(_, _, match_data)
+					local match = match_data.full_match
+					-- Extraer color y tonalidad
+					local color, shade = match:match("[%w-]+%-([a-z%-]+)%-(%d+)")
+					shade = tonumber(shade)
 
-          local tw = require('utils.tailwind-colors')
-          local bg_hex = vim.tbl_get(tw.colors, color, shade)
+					local tw = require("utils.tailwind-colors")
+					local bg_hex = vim.tbl_get(tw.colors, color, shade)
 
-          if bg_hex then
-            local hl_group = "MiniHipatternsTailwind" .. color .. shade
+					if bg_hex then
+						local hl_group = "MiniHipatternsTailwind" .. color .. shade
 
-            -- Crear grupo solo si no existe en cache
-            if not tw.hl_cache[hl_group] then
-              tw.hl_cache[hl_group] = true
+						-- Crear grupo solo si no existe en cache
+						if not tw.hl_cache[hl_group] then
+							tw.hl_cache[hl_group] = true
 
-              -- Lógica de contraste para foreground
-              local fg_shade = shade == 500 and 950 or shade < 500 and 900 or 100
-              local fg_hex = vim.tbl_get(tw.colors, color, fg_shade)
+							-- Lógica de contraste para foreground
+							local fg_shade = shade == 500 and 950 or shade < 500 and 900 or 100
+							local fg_hex = vim.tbl_get(tw.colors, color, fg_shade)
 
-              vim.api.nvim_set_hl(0, hl_group, {
-                bg = "#" .. bg_hex,
-                fg = "#" .. fg_hex,
-              })
-            end
+							vim.api.nvim_set_hl(0, hl_group, {
+								bg = "#" .. bg_hex,
+								fg = "#" .. fg_hex,
+							})
+						end
 
-            return hl_group
-          end
-        end,
+						return hl_group
+					end
+				end,
 
-        extmark_opts = { priority = 2000 },
-      },
+				extmark_opts = { priority = 2000 },
+			},
 
-      -- Highlight Git conflict markers
-      git_conflict_start = {
-        pattern = '^<<<<<<< .*',
-        group = 'DiffDelete',
-      },
-      git_conflict_sep = {
-        pattern = '^=======',
-        group = 'DiffChange',
-      },
-      git_conflict_end = {
-        pattern = '^>>>>>>> .*',
-        group = 'DiffAdd',
-      },
-    },
-  })
+			-- Highlight Git conflict markers
+			git_conflict_start = {
+				pattern = "^<<<<<<< .*",
+				group = "DiffDelete",
+			},
+			git_conflict_sep = {
+				pattern = "^=======",
+				group = "DiffChange",
+			},
+			git_conflict_end = {
+				pattern = "^>>>>>>> .*",
+				group = "DiffAdd",
+			},
+		},
+	})
 end)
 
 -- Visualize and work with indent scope. It visualizes indent scope "at cursor"
@@ -632,14 +712,18 @@ end)
 --
 -- See also:
 -- - `:h MiniIndentscope.gen_animation` - available animation rules
-later(function() require('mini.indentscope').setup() end)
+later(function()
+	require("mini.indentscope").setup()
+end)
 
 -- Jump to next/previous single character. It implements "smarter `fFtT` keys"
 -- (see `:h f`) that work across multiple lines, start "jumping mode", and
 -- highlight all target matches. Example usage:
 -- - `fxff` - move *f*orward onto next character "x", then next, and next again
 -- - `dt)` - *d*elete *t*ill next closing parenthesis (`)`)
-later(function() require('mini.jump').setup() end)
+later(function()
+	require("mini.jump").setup()
+end)
 
 -- Jump within visible lines to pre-defined spots via iterative label filtering.
 -- Spots are computed by a configurable spotter function. Example usage:
@@ -651,7 +735,9 @@ later(function() require('mini.jump').setup() end)
 --
 -- See also:
 -- - `:h MiniJump2d.gen_spotter` - list of available spotters
-later(function() require('mini.jump2d').setup() end)
+later(function()
+	require("mini.jump2d").setup()
+end)
 
 -- Special key mappings. Provides helpers to map:
 -- - Multi-step actions. Apply action 1 if condition is met; else apply
@@ -665,12 +751,12 @@ later(function() require('mini.jump2d').setup() end)
 -- - `:h MiniKeymap.map_multistep()` - map multi-step action
 -- - `:h MiniKeymap.map_combo()` - map combo
 later(function()
-  require('mini.keymap').setup()
-  -- Completion keymaps are handled by blink.cmp
-  -- On `<CR>` account for pairs from 'mini.pairs'
-  MiniKeymap.map_multistep('i', '<CR>', { 'minipairs_cr' })
-  -- On `<BS>` account for pairs from 'mini.pairs'
-  MiniKeymap.map_multistep('i', '<BS>', { 'minipairs_bs' })
+	require("mini.keymap").setup()
+	-- Completion keymaps are handled by blink.cmp
+	-- On `<CR>` account for pairs from 'mini.pairs'
+	MiniKeymap.map_multistep("i", "<CR>", { "minipairs_cr" })
+	-- On `<BS>` account for pairs from 'mini.pairs'
+	MiniKeymap.map_multistep("i", "<BS>", { "minipairs_bs" })
 end)
 
 -- Window with text overview. It is displayed on the right hand side. Can be used
@@ -685,26 +771,26 @@ end)
 --
 -- NOTE: Might introduce lag on very big buffers (10000+ lines)
 later(function()
-  local map = require('mini.map')
-  map.setup({
-    -- Use Braille dots to encode text
-    symbols = { encode = map.gen_encode_symbols.dot('4x2') },
-    -- Show built-in search matches, 'mini.diff' hunks, and diagnostic entries
-    integrations = {
-      map.gen_integration.builtin_search(),
-      map.gen_integration.diff(),
-      map.gen_integration.diagnostic(),
-    },
-  })
+	local map = require("mini.map")
+	map.setup({
+		-- Use Braille dots to encode text
+		symbols = { encode = map.gen_encode_symbols.dot("4x2") },
+		-- Show built-in search matches, 'mini.diff' hunks, and diagnostic entries
+		integrations = {
+			map.gen_integration.builtin_search(),
+			map.gen_integration.diff(),
+			map.gen_integration.diagnostic(),
+		},
+	})
 
-  -- Map built-in navigation characters to force map refresh
-  for _, key in ipairs({ 'n', 'N', '*', '#' }) do
-    local rhs = key
-        -- Also open enough folds when jumping to the next match
-        .. 'zv'
-        .. '<Cmd>lua MiniMap.refresh({}, { lines = false, scrollbar = false })<CR>'
-    vim.keymap.set('n', key, rhs)
-  end
+	-- Map built-in navigation characters to force map refresh
+	for _, key in ipairs({ "n", "N", "*", "#" }) do
+		local rhs = key
+			-- Also open enough folds when jumping to the next match
+			.. "zv"
+			.. "<Cmd>lua MiniMap.refresh({}, { lines = false, scrollbar = false })<CR>"
+		vim.keymap.set("n", key, rhs)
+	end
 end)
 
 -- Move any selection in any direction. Example usage in Normal mode:
@@ -713,7 +799,9 @@ end)
 --
 -- Example usage in Visual mode:
 -- - `<M-h>`/`<M-j>`/`<M-k>`/`<M-l>` - move selection left/down/up/right
-later(function() require('mini.move').setup() end)
+later(function()
+	require("mini.move").setup()
+end)
 
 -- Text edit operators. All operators have mappings for:
 -- - Regular operator (waits for motion/textobject to use)
@@ -734,16 +822,16 @@ later(function() require('mini.move').setup() end)
 -- - `:h MiniOperators-mappings` - overview of how mappings are created
 -- - `:h MiniOperators-overview` - overview of present operators
 later(function()
-  require('mini.operators').setup()
+	require("mini.operators").setup()
 
-  -- Create mappings for swapping adjacent arguments. Notes:
-  -- - Relies on `a` argument textobject from 'mini.ai'.
-  -- - It is not 100% reliable, but mostly works.
-  -- - It overrides `:h (` and `:h )`.
-  -- Explanation: `gx`-`ia`-`gx`-`ila` <=> exchange current and last argument
-  -- Usage: when on `a` in `(aa, bb)` press `)` followed by `(`.
-  vim.keymap.set('n', '(', 'gxiagxila', { remap = true, desc = 'Swap arg left' })
-  vim.keymap.set('n', ')', 'gxiagxina', { remap = true, desc = 'Swap arg right' })
+	-- Create mappings for swapping adjacent arguments. Notes:
+	-- - Relies on `a` argument textobject from 'mini.ai'.
+	-- - It is not 100% reliable, but mostly works.
+	-- - It overrides `:h (` and `:h )`.
+	-- Explanation: `gx`-`ia`-`gx`-`ila` <=> exchange current and last argument
+	-- Usage: when on `a` in `(aa, bb)` press `)` followed by `(`.
+	vim.keymap.set("n", "(", "gxiagxila", { remap = true, desc = "Swap arg left" })
+	vim.keymap.set("n", ")", "gxiagxina", { remap = true, desc = "Swap arg right" })
 end)
 
 -- Autopairs functionality. Insert pair when typing opening character and go over
@@ -755,8 +843,8 @@ end)
 -- - `<C-v>(` - always insert a single "(" literally. This is useful since
 --   'mini.pairs' doesn't provide particularly smart behavior, like auto balancing
 later(function()
-  -- Create pairs not only in Insert, but also in Command line mode
-  require('mini.pairs').setup({ modes = { command = true } })
+	-- Create pairs not only in Insert, but also in Command line mode
+	require("mini.pairs").setup({ modes = { command = true } })
 end)
 
 -- Pick anything with single window layout and fast matching. This is one of
@@ -789,11 +877,11 @@ end)
 --   Execute one either with Lua function, `:Pick <picker-name>` command, or
 --   one of `<Leader>f` mappings defined in 'plugin/20_keymaps.lua'
 later(function()
-  require('mini.pick').setup()
+	require("mini.pick").setup()
 
-  -- Register custom pickers from pick-utils
-  local pick_utils = require 'utils.pick-utils'
-  MiniPick.registry.multi_grep = pick_utils.multi_grep
+	-- Register custom pickers from pick-utils
+	local pick_utils = require("utils.pick-utils")
+	MiniPick.registry.repos = pick_utils.repo_picker
 end)
 
 -- Manage and expand snippets (templates for a frequently used text).
@@ -839,30 +927,30 @@ end)
 -- - `:h MiniSnippets-session` - details about snippet session
 -- - `:h MiniSnippets.gen_loader` - list of available loaders
 later(function()
-  -- Define language patterns to work better with 'friendly-snippets'
-  local latex_patterns = { 'latex/**/*.json', '**/latex.json' }
-  local lang_patterns = {
-    tex = latex_patterns,
-    plaintex = latex_patterns,
-    -- Recognize special injected language of markdown tree-sitter parser
-    markdown_inline = { 'markdown.json' },
-  }
+	-- Define language patterns to work better with 'friendly-snippets'
+	local latex_patterns = { "latex/**/*.json", "**/latex.json" }
+	local lang_patterns = {
+		tex = latex_patterns,
+		plaintex = latex_patterns,
+		-- Recognize special injected language of markdown tree-sitter parser
+		markdown_inline = { "markdown.json" },
+	}
 
-  local snippets = require('mini.snippets')
-  local config_path = vim.fn.stdpath('config')
-  snippets.setup({
-    snippets = {
-      -- Always load 'snippets/global.json' from config directory
-      snippets.gen_loader.from_file(config_path .. '/snippets/global.json'),
-      -- Load from 'snippets/' directory of plugins, like 'friendly-snippets'
-      snippets.gen_loader.from_lang({ lang_patterns = lang_patterns }),
-    },
-  })
+	local snippets = require("mini.snippets")
+	local config_path = vim.fn.stdpath("config")
+	snippets.setup({
+		snippets = {
+			-- Always load 'snippets/global.json' from config directory
+			snippets.gen_loader.from_file(config_path .. "/snippets/global.json"),
+			-- Load from 'snippets/' directory of plugins, like 'friendly-snippets'
+			snippets.gen_loader.from_lang({ lang_patterns = lang_patterns }),
+		},
+	})
 
-  -- By default snippets available at cursor are not shown as candidates in
-  -- 'mini.completion' menu. This requires a dedicated in-process LSP server
-  -- that will provide them. To have that, uncomment next line (use `gcc`).
-  MiniSnippets.start_lsp_server()
+	-- By default snippets available at cursor are not shown as candidates in
+	-- 'mini.completion' menu. This requires a dedicated in-process LSP server
+	-- that will provide them. To have that, uncomment next line (use `gcc`).
+	MiniSnippets.start_lsp_server()
 end)
 
 -- Split and join arguments (regions inside brackets between allowed separators).
@@ -875,7 +963,9 @@ end)
 --
 -- See also:
 -- - `:h MiniSplitjoin.gen_hook` - list of available hooks
-later(function() require('mini.splitjoin').setup() end)
+later(function()
+	require("mini.splitjoin").setup()
+end)
 
 -- Surround actions: add/delete/replace/find/highlight. Working with surroundings
 -- is surprisingly common: surround word with quotes, replace `)` with `]`, etc.
@@ -900,12 +990,16 @@ later(function() require('mini.splitjoin').setup() end)
 -- - `:h MiniSurround-builtin-surroundings` - list of all supported surroundings
 -- - `:h MiniSurround-surrounding-specification` - examples of custom surroundings
 -- - `:h MiniSurround-vim-surround-config` - alternative set of action mappings
-later(function() require('mini.surround').setup() end)
+later(function()
+	require("mini.surround").setup()
+end)
 
 -- Highlight and remove trailspace. Temporarily stops highlighting in Insert mode
 -- to reduce noise when typing. Example usage:
 -- - `<Leader>ot` - trim all trailing whitespace in a buffer
-later(function() require('mini.trailspace').setup() end)
+later(function()
+	require("mini.trailspace").setup()
+end)
 
 -- Track and reuse file system visits. Every file/directory visit is persistently
 -- tracked on disk to later reuse: show in special frecency order, etc. It also
@@ -919,7 +1013,9 @@ later(function() require('mini.trailspace').setup() end)
 -- See also:
 -- - `:h MiniVisits-overview` - overview of how module works
 -- - `:h MiniVisits-examples` - examples of common setups
-later(function() require('mini.visits').setup() end)
+later(function()
+	require("mini.visits").setup()
+end)
 
 -- Not mentioned here, but can be useful:
 -- - 'mini.doc' - needed only for plugin developers.

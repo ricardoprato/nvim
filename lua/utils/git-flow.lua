@@ -14,13 +14,15 @@ M.get_commands = function()
     return _cache.git_flow_commands
   end
 
-  local handle = io.popen('git flow help 2>&1')
-  if not handle then
+  local out = vim.system(
+    { 'git', 'flow', 'help' },
+    { text = true, stderr = 'stdout' }
+  ):wait()
+  if out.code ~= 0 then
     return {}
   end
 
-  local output = handle:read('*a')
-  handle:close()
+  local output = out.stdout
 
   local commands = {}
   -- Parse lines that start with "   " followed by a command name
@@ -42,13 +44,15 @@ M.get_subcommands = function(command)
     return _cache.git_flow_subcommands[command]
   end
 
-  local handle = io.popen('git flow ' .. command .. ' help 2>&1')
-  if not handle then
+  local out = vim.system(
+    { 'git', 'flow', command, 'help' },
+    { text = true, stderr = 'stdout' }
+  ):wait()
+  if out.code ~= 0 then
     return {}
   end
 
-  local output = handle:read('*a')
-  handle:close()
+  local output = out.stdout
 
   local subcommands = {}
   -- Parse lines like "   or: git flow feature start"

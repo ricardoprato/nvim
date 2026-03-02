@@ -85,8 +85,13 @@ function M.open(cmd, opts)
 end
 
 --- Open lazygit in floating terminal
-function M.lazygit()
-  M.open('lazygit', { width = 0.95, height = 0.95 })
+---@param repo_path? string Optional path to open lazygit in
+function M.lazygit(repo_path)
+  local cmd = 'lazygit'
+  if repo_path then
+    cmd = string.format('lazygit -p %s', vim.fn.shellescape(repo_path))
+  end
+  M.open(cmd, { width = 0.95, height = 0.95 })
 end
 
 --- Open lazydocker in floating terminal

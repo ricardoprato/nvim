@@ -19,6 +19,20 @@ end
 nmap('[p', '<Cmd>exe "put! " . v:register<CR>', 'Paste Above')
 nmap(']p', '<Cmd>exe "put "  . v:register<CR>', 'Paste Below')
 
+-- Window navigation (Kitty-aware if inside Kitty, plain vim otherwise)
+if vim.env.KITTY_WINDOW_ID then
+  local kitty_nav = require('utils.kitty-nav')
+  nmap('<C-h>', function() kitty_nav.navigate('h') end, 'Move to left window')
+  nmap('<C-j>', function() kitty_nav.navigate('j') end, 'Move to lower window')
+  nmap('<C-k>', function() kitty_nav.navigate('k') end, 'Move to upper window')
+  nmap('<C-l>', function() kitty_nav.navigate('l') end, 'Move to right window')
+else
+  nmap('<C-h>', '<C-w>h', 'Move to left window')
+  nmap('<C-j>', '<C-w>j', 'Move to lower window')
+  nmap('<C-k>', '<C-w>k', 'Move to upper window')
+  nmap('<C-l>', '<C-w>l', 'Move to right window')
+end
+
 -- Many general mappings are created by 'mini.basics'. See 'plugin/30_mini.lua'
 
 -- The next part (until `-- stylua: ignore end`) is aligned manually for easier
@@ -158,6 +172,7 @@ nmap_leader('f:', '<Cmd>Pick history scope=":"<CR>', '":" history')
 nmap_leader('fa', '<Cmd>Pick git_hunks scope="staged"<CR>', 'Added hunks (all)')
 nmap_leader('fA', pick_added_hunks_buf, 'Added hunks (buf)')
 nmap_leader('fb', '<Cmd>Pick buffers<CR>', 'Buffers')
+nmap_leader('fB', '<Cmd>lua require("utils.pick-utils").git_branch_files()<CR>', 'Git status (all files)')
 nmap_leader('fc', '<Cmd>Pick git_commits<CR>', 'Commits (all)')
 nmap_leader('fC', '<Cmd>Pick git_commits path="%"<CR>', 'Commits (buf)')
 nmap_leader('fd', '<Cmd>Pick diagnostic scope="all"<CR>', 'Diagnostic workspace')
@@ -177,6 +192,7 @@ nmap_leader('fr', '<Cmd>Pick resume<CR>', 'Resume')
 nmap_leader('fR', '<Cmd>Pick lsp scope="references"<CR>', 'References (LSP)')
 nmap_leader('fs', pick_workspace_symbols_live, 'Symbols workspace (live)')
 nmap_leader('fS', '<Cmd>Pick lsp scope="document_symbol"<CR>', 'Symbols document')
+nmap_leader('fp', '<Cmd>Pick repos<CR>', 'Projects/Repos')
 nmap_leader('fv', '<Cmd>Pick visit_paths cwd=""<CR>', 'Visit paths (all)')
 nmap_leader('fV', '<Cmd>Pick visit_paths<CR>', 'Visit paths (cwd)')
 
@@ -202,6 +218,8 @@ nmap_leader('gP', '<Cmd>Git push<CR>', 'Git push')
 nmap_leader('gp', '<Cmd>Git pull --rebase<CR>', 'Git pull')
 nmap_leader('gb', '<Cmd>vertical Git blame -- %<CR>', 'Git blame')
 nmap_leader('gB', '<Cmd>Pick git_branches<CR>', 'Git branches')
+nmap_leader('gv', '<Cmd>DiffviewOpen<CR>', 'Diffview open')
+nmap_leader('gV', '<Cmd>DiffviewClose<CR>', 'Diffview close')
 nmap_leader('g-', '<Cmd>Git checkout -<CR>', 'Git checkout -')
 
 xmap_leader('gs', '<Cmd>lua MiniGit.show_at_cursor()<CR>', 'Show at selection')
@@ -306,10 +324,18 @@ nmap_leader('td', '<Cmd>lua require("utils.float-term").lazydocker()<CR>', 'Lazy
 local map = vim.keymap.set
 -- [[ Terminal Window Navigation ]]
 map('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
-map('t', '<C-h>', '<C-\\><C-N><C-w>h', { desc = 'Move to left window (Terminal)' })
-map('t', '<C-j>', '<C-\\><C-N><C-w>j', { desc = 'Move to lower window (Terminal)' })
-map('t', '<C-k>', '<C-\\><C-N><C-w>k', { desc = 'Move to upper window (Terminal)' })
-map('t', '<C-l>', '<C-\\><C-N><C-w>l', { desc = 'Move to right window (Terminal)' })
+if vim.env.KITTY_WINDOW_ID then
+  local kitty_nav = require('utils.kitty-nav')
+  map('t', '<C-h>', function() vim.cmd('stopinsert'); kitty_nav.navigate('h') end, { desc = 'Move to left window (Terminal)' })
+  map('t', '<C-j>', function() vim.cmd('stopinsert'); kitty_nav.navigate('j') end, { desc = 'Move to lower window (Terminal)' })
+  map('t', '<C-k>', function() vim.cmd('stopinsert'); kitty_nav.navigate('k') end, { desc = 'Move to upper window (Terminal)' })
+  map('t', '<C-l>', function() vim.cmd('stopinsert'); kitty_nav.navigate('l') end, { desc = 'Move to right window (Terminal)' })
+else
+  map('t', '<C-h>', '<C-\\><C-n><C-w>h', { desc = 'Move to left window (Terminal)' })
+  map('t', '<C-j>', '<C-\\><C-n><C-w>j', { desc = 'Move to lower window (Terminal)' })
+  map('t', '<C-k>', '<C-\\><C-n><C-w>k', { desc = 'Move to upper window (Terminal)' })
+  map('t', '<C-l>', '<C-\\><C-n><C-w>l', { desc = 'Move to right window (Terminal)' })
+end
 
 -- v is for 'Visits'. Common usage:
 -- - `<Leader>vv` - add    "core" label to current file.
