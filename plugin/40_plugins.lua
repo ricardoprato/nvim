@@ -329,6 +329,7 @@ later(function()
 				path = "~/obsidian",
 			},
 		},
+		legacy_commands = false,
 	})
 end)
 
