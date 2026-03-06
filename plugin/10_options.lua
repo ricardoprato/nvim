@@ -98,6 +98,95 @@ _G.Config.new_autocmd('FileType', nil, f, "Proper 'formatoptions'")
 
 -- There are other autocommands created by 'mini.basics'. See 'plugin/30_mini.lua'.
 
+-- Big files ==================================================================
+
+-- Disable expensive features for large files (>1.5 MB) to keep Neovim responsive.
+-- Sets `vim.b.bigfile = true` so other plugins can check and skip work.
+local bigfile_threshold = 1.5 * 1024 * 1024 -- 1.5 MB
+
+local bigfile_group = vim.api.nvim_create_augroup('bigfile', { clear = true })
+
+vim.api.nvim_create_autocmd('BufReadPre', {
+  group = bigfile_group,
+  callback = function(args)
+    local path = vim.api.nvim_buf_get_name(args.buf)
+    if path == '' then return end
+    local ok, stat = pcall(vim.uv.fs_stat, path)
+    if not ok or not stat or stat.size < bigfile_threshold then return end
+
+    vim.b[args.buf].bigfile = true
+
+    -- Disable heavy buffer-local features before content is loaded
+    vim.api.nvim_set_option_value('swapfile',  false, { buf = args.buf })
+    vim.api.nvim_set_option_value('undofile',  false, { buf = args.buf })
+    vim.api.nvim_set_option_value('undolevels', -1,   { buf = args.buf })
+  end,
+  desc = 'Mark big files and disable swap/undo before read',
+})
+
+vim.api.nvim_create_autocmd('BufReadPost', {
+  group = bigfile_group,
+  callback = function(args)
+    if not vim.b[args.buf].bigfile then return end
+
+    -- Window-scoped options (set for every window that displays this buffer)
+    local function apply_win_opts(win)
+      vim.api.nvim_set_option_value('foldmethod',  'manual', { win = win })
+      vim.api.nvim_set_option_value('foldenable',  false,    { win = win })
+      vim.api.nvim_set_option_value('cursorline',  false,    { win = win })
+      vim.api.nvim_set_option_value('relativenumber', false, { win = win })
+      vim.api.nvim_set_option_value('spell',       false,    { win = win })
+      vim.api.nvim_set_option_value('signcolumn',  'no',     { win = win })
+      vim.api.nvim_set_option_value('colorcolumn', '',       { win = win })
+    end
+
+    -- Apply to all windows currently showing this buffer
+    for _, win in ipairs(vim.fn.win_findbuf(args.buf)) do
+      apply_win_opts(win)
+    end
+
+    -- Also apply when the buffer is displayed in a new window later
+    vim.api.nvim_create_autocmd('BufWinEnter', {
+      group = bigfile_group,
+      buffer = args.buf,
+      callback = function()
+        apply_win_opts(vim.api.nvim_get_current_win())
+      end,
+      desc = 'Apply bigfile win opts on new window',
+    })
+
+    -- Disable syntax highlighting and filetype plugins
+    vim.cmd('syntax clear')
+    vim.bo[args.buf].syntax = ''
+    vim.bo[args.buf].filetype = ''
+
+    -- Stop treesitter if it was started
+    pcall(vim.treesitter.stop, args.buf)
+
+    -- Disable mini modules that operate per-buffer
+    -- Each module checks if it's loaded before calling disable
+    local mini_modules = {
+      'MiniIndentscope', 'MiniCursorword', 'MiniTrailspace',
+      'MiniDiff', 'MiniHipatterns', 'MiniMap',
+    }
+    for _, mod in ipairs(mini_modules) do
+      local m = _G[mod]
+      if m then
+        vim.b[args.buf]['mini' .. mod:sub(5):lower() .. '_disable'] = true
+      end
+    end
+
+    -- Disable diagnostics for this buffer
+    vim.diagnostic.enable(false, { bufnr = args.buf })
+
+    -- Disable format on save
+    vim.b[args.buf].disable_autoformat = true
+
+    vim.notify('Big file detected — heavy features disabled', vim.log.levels.INFO)
+  end,
+  desc = 'Disable heavy features after reading a big file',
+})
+
 -- Diagnostics ================================================================
 
 -- Neovim has built-in support for showing diagnostic messages. This configures
@@ -133,27 +222,5 @@ _G.Config.new_autocmd('BufWinEnter', nil, function(args)
     })
   end
 end, 'Make q close help, man, quickfix, dap floats')
-
--- Detectar archivos eliminados al cambiar de branch o al volver a nvim
-_G.Config.new_autocmd('FocusGained', nil, function()
-  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-    if vim.api.nvim_buf_is_loaded(buf) then
-      local name = vim.api.nvim_buf_get_name(buf)
-      local buftype = vim.bo[buf].buftype
-      -- Solo verificar buffers normales (buftype vacío) con nombre de archivo real
-      if name ~= '' and buftype == '' and not name:match('^%w+://') then
-        if vim.fn.filereadable(name) == 0 then
-          local modified = vim.bo[buf].modified
-          if not modified then
-            vim.api.nvim_buf_delete(buf, { force = false })
-            vim.notify('Buffer cerrado: ' .. vim.fn.fnamemodify(name, ':t'), vim.log.levels.WARN)
-          else
-            vim.notify('Archivo eliminado (tiene cambios): ' .. vim.fn.fnamemodify(name, ':t'), vim.log.levels.ERROR)
-          end
-        end
-      end
-    end
-  end
-end, 'Check deleted files on focus')
 
 -- stylua: ignore end

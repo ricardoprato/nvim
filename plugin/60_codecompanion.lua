@@ -47,6 +47,64 @@ vim.defer_fn(function()
   end)
 end, 0)
 
+-- Terminal notification (OSC 9) when CodeCompanion needs attention.
+-- Only fires when the Neovim window is not focused.
+local _nvim_focused = true
+
+vim.api.nvim_create_autocmd('FocusGained', {
+  callback = function() _nvim_focused = true end,
+})
+vim.api.nvim_create_autocmd('FocusLost', {
+  callback = function() _nvim_focused = false end,
+})
+
+local last_notify_time
+vim.api.nvim_create_autocmd('User', {
+  pattern = {
+    'CodeCompanionChatDone',
+    'CodeCompanionRequestFinished',
+    'CodeCompanionToolApprovalRequested',
+  },
+  callback = function(args)
+    if _nvim_focused then return end
+    local cur = os.time()
+    if last_notify_time == nil or cur - last_notify_time > 2 then
+      local messages = {
+        CodeCompanionChatDone = 'Waiting for input',
+        CodeCompanionToolApprovalRequested = 'Tool approval needed',
+      }
+      local msg = messages[args.match] or 'Response ready'
+      io.write(string.format('\x1b]9;CodeCompanion: %s\x1b\\', msg))
+      io.flush()
+      last_notify_time = cur
+    end
+  end,
+})
+
+-- Auto-switch to Plan Mode on first chat submission.
+-- Claude will plan before executing; on ExitPlanMode the user picks
+-- "Yes, and auto-accept edits" to let it code without per-tool prompts.
+local _plan_mode_set = {} -- tracks bufnrs already switched
+vim.api.nvim_create_autocmd('User', {
+  pattern = 'CodeCompanionChatSubmitted',
+  callback = function(args)
+    local bufnr = args.data and args.data.bufnr
+    if not bufnr or _plan_mode_set[bufnr] then return end
+    if args.data.type ~= 'acp' then return end
+
+    _plan_mode_set[bufnr] = true
+    vim.schedule(function()
+      local ok, cc_chat = pcall(require, 'codecompanion.interactions.chat')
+      if not ok then return end
+      local chat = cc_chat.buf_get_chat(bufnr)
+      if not chat or not chat.acp_connection then return end
+      if chat.acp_connection:set_mode('plan') then
+        if chat.update_metadata then chat:update_metadata() end
+      end
+    end)
+  end,
+})
+
 later(function()
   add('MeanderingProgrammer/render-markdown.nvim')
 
@@ -124,7 +182,6 @@ later(function()
             },
             defaults = {
               model = 'opus',
-              timeout = 120000,
             },
           })
         end,
