@@ -21,6 +21,7 @@ vim.g.mapleader   = ' '                              -- Use `<Space>` as <Leader
 vim.o.mouse       = 'a'                              -- Enable mouse
 vim.o.mousescroll = 'ver:25,hor:6'                   -- Customize mouse scroll
 vim.o.switchbuf   = 'usetab,uselast'                 -- Use already opened buffers when switching
+vim.o.autoread    = true                             -- Reload files changed outside Neovim
 vim.o.undofile    = true                             -- Enable persistent undo
 vim.o.undolevels  = 500                              -- Limit undo levels (default 1000)
 
@@ -95,6 +96,14 @@ vim.o.completeopt    = 'menuone,noselect,fuzzy,nosort' -- Use custom behavior
 -- Do on `FileType` to always override these changes from filetype plugins.
 local f              = function() vim.cmd('setlocal formatoptions-=c formatoptions-=o') end
 _G.Config.new_autocmd('FileType', nil, f, "Proper 'formatoptions'")
+
+-- Reload buffers when Neovim regains focus or when switching buffers.
+-- Works together with `autoread` (line 24) to pick up external changes
+-- (e.g. edits made by Claude Code, git operations, etc.)
+_G.Config.new_autocmd({ 'FocusGained', 'BufEnter' }, nil, function()
+  if vim.o.buftype ~= '' then return end
+  vim.cmd('checktime')
+end, 'Check for external file changes')
 
 -- There are other autocommands created by 'mini.basics'. See 'plugin/30_mini.lua'.
 

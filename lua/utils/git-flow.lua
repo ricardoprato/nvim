@@ -110,85 +110,55 @@ local function exec(subcmd, args, opts)
   vim.cmd('tab term ' .. cmd_str)
 end
 
--- Git Flow Init
+-- Check if git-flow is initialized in the current repo
+M.is_initialized = function(repo_path)
+  repo_path = repo_path or root.git_root()
+  if not repo_path then return false end
+
+  local out = vim.system(
+    { 'git', '-C', repo_path, 'config', '--get', 'gitflow.branch.master' },
+    { text = true, stderr = false }
+  ):wait()
+  return out.code == 0
+end
+
+-- Auto-init git-flow with defaults or interactively
+M.auto_init = function(repo_path)
+  repo_path = repo_path or root.git_root()
+  if not repo_path then
+    vim.notify('Not in a git repository', vim.log.levels.WARN)
+    return
+  end
+
+  if M.is_initialized(repo_path) then
+    vim.notify('Git-flow already initialized', vim.log.levels.INFO)
+    return
+  end
+
+  local choice = vim.fn.confirm(
+    'Initialize git-flow?',
+    '&Defaults\n&Interactive\n&Cancel', 3
+  )
+
+  if choice == 1 then
+    local result = vim.system(
+      { 'git', '-C', repo_path, 'flow', 'init', '-d' },
+      { text = true, stderr = 'stdout' }
+    ):wait()
+    if result.code == 0 then
+      vim.notify('Git-flow initialized with defaults', vim.log.levels.INFO)
+    else
+      vim.notify('Git-flow init failed: ' .. result.stdout, vim.log.levels.ERROR)
+    end
+  elseif choice == 2 then
+    M.init()
+  end
+end
+
+-- Git Flow Init (interactive, opens terminal)
 M.init = function()
-  exec('init', {})
-end
-
--- Feature commands
-M.feature_start = function(name)
-  name = name or vim.fn.input('Feature name: ')
-  if name == '' then return end
-  exec('feature', { 'start', name })
-end
-
-M.feature_finish = function(name)
-  name = name or vim.fn.input('Feature name: ')
-  if name == '' then return end
-  exec('feature', { 'finish', name })
-end
-
-M.feature_delete = function(name)
-  name = name or vim.fn.input('Feature name: ')
-  if name == '' then return end
-  exec('feature', { 'delete', name })
-end
-
--- Release commands
-M.release_start = function(version)
-  version = version or vim.fn.input('Release version: ')
-  if version == '' then return end
-  exec('release', { 'start', version })
-end
-
-M.release_finish = function(version)
-  version = version or vim.fn.input('Release version: ')
-  if version == '' then return end
-  exec('release', { 'finish', version })
-end
-
-M.release_delete = function(version)
-  version = version or vim.fn.input('Release version: ')
-  if version == '' then return end
-  exec('release', { 'delete', version })
-end
-
--- Hotfix commands
-M.hotfix_start = function(name)
-  name = name or vim.fn.input('Hotfix name: ')
-  if name == '' then return end
-  exec('hotfix', { 'start', name })
-end
-
-M.hotfix_finish = function(name)
-  name = name or vim.fn.input('Hotfix name: ')
-  if name == '' then return end
-  exec('hotfix', { 'finish', name })
-end
-
-M.hotfix_delete = function(name)
-  name = name or vim.fn.input('Hotfix name: ')
-  if name == '' then return end
-  exec('hotfix', { 'delete', name })
-end
-
--- Bugfix commands (AVH edition)
-M.bugfix_start = function(name)
-  name = name or vim.fn.input('Bugfix name: ')
-  if name == '' then return end
-  exec('bugfix', { 'start', name })
-end
-
-M.bugfix_finish = function(name)
-  name = name or vim.fn.input('Bugfix name: ')
-  if name == '' then return end
-  exec('bugfix', { 'finish', name })
-end
-
-M.bugfix_delete = function(name)
-  name = name or vim.fn.input('Bugfix name: ')
-  if name == '' then return end
-  exec('bugfix', { 'delete', name })
+  local cmd = { 'git', 'flow', 'init' }
+  vim.cmd('tab term ' .. table.concat(cmd, ' '))
 end
 
 -- Command completion function

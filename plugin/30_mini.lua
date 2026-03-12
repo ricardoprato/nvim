@@ -122,7 +122,18 @@ end)
 -- See also:
 -- - `:h MiniNotify.config` for some of common configuration examples.
 now(function()
-	require("mini.notify").setup()
+	require("mini.notify").setup({
+		content = {
+			sort = function(notif_arr)
+				-- Filter out LSP progress notifications (e.g. "pyright: (100%)")
+				notif_arr = vim.tbl_filter(function(notif)
+					return not notif.msg:find(': %(%d+%%%%)%s*$')
+				end, notif_arr)
+				table.sort(notif_arr, function(a, b) return a.ts_update < b.ts_update end)
+				return notif_arr
+			end,
+		},
+	})
 end)
 
 -- Session management. A thin wrapper around `:h mksession` that consistently
@@ -147,6 +158,17 @@ now(function()
 				end,
 			},
 		},
+	})
+
+	-- Auto-save active session on exit
+	vim.api.nvim_create_autocmd("VimLeavePre", {
+		callback = function()
+			if vim.v.this_session ~= "" then
+				pcall(function()
+					MiniSessions.write()
+				end)
+			end
+		end,
 	})
 end)
 
@@ -191,33 +213,12 @@ now(function()
 				local location = MiniStatusline.section_location({ trunc_width = 75 })
 				local search = MiniStatusline.section_searchcount({ trunc_width = 75 })
 
-				-- CodeCompanion: show model and mode in chat buffers
-				local cc_info = ""
-				local meta = _G.codecompanion_chat_metadata
-				if meta then
-					local bufnr = vim.api.nvim_get_current_buf()
-					local m = meta[bufnr]
-					if m then
-						local parts = {}
-						if m.adapter and m.adapter.model then
-							table.insert(parts, m.adapter.model)
-						end
-						if m.mode and m.mode.name then
-							table.insert(parts, m.mode.name)
-						end
-						if #parts > 0 then
-							cc_info = table.concat(parts, " | ")
-						end
-					end
-				end
-
 				return MiniStatusline.combine_groups({
 					{ hl = mode_hl, strings = { mode } },
 					{ hl = "MiniStatuslineDevinfo", strings = { git, diff, diagnostics, lsp } },
 					"%<",
 					{ hl = "MiniStatuslineFilename", strings = { filename } },
 					"%=",
-					{ hl = "MiniStatuslineDevinfo", strings = { cc_info } },
 					{ hl = "MiniStatuslineFileinfo", strings = { fileinfo } },
 					{ hl = mode_hl, strings = { search, location } },
 				})
@@ -492,6 +493,19 @@ later(function()
 		MiniFiles.set_bookmark("w", vim.fn.getcwd(), { desc = "Working directory" })
 	end
 	_G.Config.new_autocmd("User", "MiniFilesExplorerOpen", add_marks, "Add bookmarks")
+
+	_G.Config.new_autocmd("User", "MiniFilesBufferCreate", function(args)
+		local buf_id = args.data.buf_id
+		vim.keymap.set("n", "<C-g>", function()
+			local entry = MiniFiles.get_fs_entry()
+			if not entry then return end
+			local dir = entry.fs_type == "directory" and entry.path or vim.fs.dirname(entry.path)
+			MiniFiles.close()
+			vim.schedule(function()
+				require("utils.float-term").lazygit(dir)
+			end)
+		end, { buffer = buf_id, desc = "Open Lazygit" })
+	end, "Add git keymaps to mini.files")
 end)
 
 -- Git integration for more straightforward Git actions based on Neovim's state.
@@ -881,7 +895,8 @@ later(function()
 
 	-- Register custom pickers from pick-utils
 	local pick_utils = require("utils.pick-utils")
-	MiniPick.registry.repos = pick_utils.repo_picker
+	MiniPick.registry.repos = pick_utils.project_picker
+
 end)
 
 -- Manage and expand snippets (templates for a frequently used text).

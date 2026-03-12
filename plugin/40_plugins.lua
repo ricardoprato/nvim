@@ -333,6 +333,16 @@ later(function()
 	})
 end)
 
+-- Render Markdown ===========================================================
+
+-- render-markdown.nvim - Beautiful markdown rendering inside Neovim buffers
+later(function()
+	add("MeanderingProgrammer/render-markdown.nvim")
+	require("render-markdown").setup({
+		file_types = { "markdown" },
+	})
+end)
+
 -- Diffview ==================================================================
 
 -- diffview.nvim - Side-by-side diff viewer for multi-file reviews
@@ -341,6 +351,16 @@ end)
 later(function()
 	add({ source = "sindrets/diffview.nvim" })
 	require("diffview").setup({ use_icons = true })
+end)
+
+-- Grug-far ==================================================================
+
+-- grug-far.nvim - Fast search and replace across files using ripgrep
+-- Opens a buffer where you type search/replace patterns and see live results.
+-- Supports file type filtering, directory scoping, and visual selection.
+later(function()
+	add({ source = "MagicDuck/grug-far.nvim" })
+	require("grug-far").setup({})
 end)
 
 -- vim-sleuth - Automatic 'shiftwidth' and 'expandtab'

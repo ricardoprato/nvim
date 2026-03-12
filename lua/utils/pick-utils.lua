@@ -1,7 +1,7 @@
 local M = {}
 local root = require('utils.root')
 
---- Discover git repositories under global root (up to depth 3)
+--- Discover git repositories under global root (where nvim was opened)
 local function get_repos()
   local global = root.global_root()
 
@@ -11,14 +11,17 @@ local function get_repos()
   ):wait()
   if out.code ~= 0 then return {} end
 
-  local output = out.stdout
-
   local repos = {}
   local escaped_root = vim.pesc(global) .. '/'
-  for git_dir in output:gmatch('[^\r\n]+') do
+  local odoo_root = vim.fn.expand('~/odoo')
+  for git_dir in out.stdout:gmatch('[^\r\n]+') do
     local repo_path = vim.fn.fnamemodify(git_dir, ':h')
     local relative = repo_path:gsub('^' .. escaped_root, '')
-    repos[#repos + 1] = { path = repo_path, relative = relative }
+    repos[#repos + 1] = {
+      path = repo_path,
+      relative = relative,
+      is_odoo = repo_path:find(vim.pesc(odoo_root), 1, true) ~= nil,
+    }
   end
 
   table.sort(repos, function(a, b) return a.relative < b.relative end)
@@ -40,6 +43,7 @@ local function format_repo_item(repo)
     path = repo.path,
     relative = repo.relative,
     branch = branch,
+    is_odoo = repo.is_odoo,
   }
 end
 
@@ -251,9 +255,9 @@ function M.git_branch_files()
   })
 end
 
---- Repo picker - select from available git repositories under global root
--- Enter=files, C-o=explorer, C-g=lazygit, C-b=branches, C-s=status
-function M.repo_picker()
+--- Project picker - select from git repos under global root (where nvim was opened)
+-- Enter=files, C-o=explorer, C-g=lazygit, C-b=branches, C-s=status, C-t=kitty tab
+function M.project_picker()
   local repos = get_repos()
   if #repos == 0 then
     vim.notify('No git repositories found under ' .. root.global_root(), vim.log.levels.WARN)
@@ -279,7 +283,7 @@ function M.repo_picker()
   MiniPick.start({
     source = {
       items = items,
-      name = 'Repos (CR=files C-o=explore C-g=lazygit C-b=branch C-s=status)',
+      name = 'Projects (CR=files C-o=explore C-g=lazygit C-b=branch C-s=status C-t=kitty)',
 
       show = function(buf_id, items_to_show, query)
         MiniPick.default_show(buf_id, items_to_show, query, { show_icons = true })
@@ -294,9 +298,22 @@ function M.repo_picker()
           'Path:       ' .. item.path,
           'Branch:     ' .. item.branch,
           '',
-          'Status:',
-          '-------',
         }
+
+        -- Contextual preview for Odoo repos: show extra-addons and docker info
+        if item.is_odoo then
+          -- Find the version root (parent that matches ~/odoo/N.N)
+          local version_root = item.path:match('(.+/odoo/%d+%.%d+)')
+          if version_root then
+            local has_docker = vim.uv.fs_stat(version_root .. '/docker-compose.yml') and 'yes' or 'no'
+            local has_make = vim.uv.fs_stat(version_root .. '/Makefile') and 'yes' or 'no'
+            table.insert(lines, 'docker-compose: ' .. has_docker .. '  Makefile: ' .. has_make)
+            table.insert(lines, '')
+          end
+        end
+
+        table.insert(lines, 'Status:')
+        table.insert(lines, '-------')
 
         if vim.v.shell_error == 0 and #status_output > 0 then
           vim.list_extend(lines, status_output)
@@ -310,6 +327,13 @@ function M.repo_picker()
 
       choose = function(item)
         if not item then return end
+        -- Switch session if available, then open files
+        local ok, session = pcall(require, 'utils.project-session')
+        if ok then
+          session.switch_to(item.path)
+        else
+          vim.cmd('cd ' .. vim.fn.fnameescape(item.path))
+        end
         MiniPick.builtin.files({}, { source = { cwd = item.path } })
       end,
     },
@@ -320,7 +344,13 @@ function M.repo_picker()
         func = function()
           local item = pick_item_and_stop()
           if not item then return end
-          vim.schedule(function() MiniFiles.open(item.path) end)
+          vim.schedule(function()
+            if rawget(_G, 'MiniFiles') then
+              MiniFiles.open(item.path)
+            else
+              vim.notify('MiniFiles not available', vim.log.levels.WARN)
+            end
+          end)
         end,
       },
 
@@ -410,6 +440,26 @@ function M.repo_picker()
                   vim.cmd('edit ' .. vim.fn.fnameescape(item.path .. '/' .. selected.path))
                 end,
               },
+            })
+          end)
+        end,
+      },
+
+      open_kitty_tab = {
+        char = '<C-t>',
+        func = function()
+          local item = pick_item_and_stop()
+          if not item then return end
+          vim.schedule(function()
+            local tab_name = vim.fn.fnamemodify(item.path, ':t')
+            if item.is_odoo then
+              local version = item.path:match('/odoo/(%d+%.%d+)')
+              if version then tab_name = 'odoo-' .. version end
+            end
+            vim.system({
+              'kitty', '@', 'launch', '--type=tab',
+              '--tab-title', tab_name,
+              '--cwd', item.path,
             })
           end)
         end,
