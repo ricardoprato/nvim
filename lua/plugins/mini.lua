@@ -1,198 +1,270 @@
 return {
-  'echasnovski/mini.nvim',
-  lazy = false,
-  priority = 900,
-  config = function()
-    -- Step 1: modules needed for first draw ================================
+	"echasnovski/mini.nvim",
+	lazy = false,
+	priority = 900,
+	keys = {
+		-- Git (mini.git + mini.diff)
+		{ "<leader>ga", "<Cmd>Git diff --cached<CR>", desc = "Added diff" },
+		{ "<leader>gA", "<Cmd>Git diff --cached -- %<CR>", desc = "Added diff buffer" },
+		{ "<leader>gc", "<Cmd>Git commit<CR>", desc = "Commit" },
+		{ "<leader>gC", "<Cmd>Git commit --amend<CR>", desc = "Commit amend" },
+		{ "<leader>gd", "<Cmd>Git diff<CR>", desc = "Diff" },
+		{ "<leader>gD", "<Cmd>Git diff -- %<CR>", desc = "Diff buffer" },
+		{
+			"<leader>gl",
+			"<Cmd>Git log --pretty=format:\\%h\\ \\%as\\ │\\ \\%s --topo-order<CR>",
+			desc = "Log",
+		},
+		{
+			"<leader>gL",
+			"<Cmd>Git log --pretty=format:\\%h\\ \\%as\\ │\\ \\%s --topo-order --follow -- %<CR>",
+			desc = "Log buffer",
+		},
+		{ "<leader>go", "<Cmd>lua MiniDiff.toggle_overlay()<CR>", desc = "Toggle overlay" },
+		{ "<leader>gs", "<Cmd>lua MiniGit.show_at_cursor()<CR>", desc = "Show at cursor" },
+		{ "<leader>gs", "<Cmd>lua MiniGit.show_at_cursor()<CR>", mode = "x", desc = "Show at selection" },
+		{ "<leader>gP", "<Cmd>Git push<CR>", desc = "Git push" },
+		{ "<leader>gp", "<Cmd>Git pull --rebase<CR>", desc = "Git pull" },
+		{ "<leader>gb", "<Cmd>vertical Git blame -- %<CR>", desc = "Git blame" },
+		{ "<leader>g-", "<Cmd>Git checkout -<CR>", desc = "Git checkout -" },
 
-    require('mini.basics').setup({
-      options = { basic = false },
-      mappings = { windows = false, move_with_alt = true },
-    })
+		-- Sessions (mini.sessions)
+		{ "<leader>sd", '<Cmd>lua MiniSessions.select("delete")<CR>', desc = "Delete" },
+		{ "<leader>sn", '<Cmd>lua MiniSessions.write(vim.fn.input("Session name: "))<CR>', desc = "New" },
+		{ "<leader>sp", '<Cmd>lua require("utils.project-session").save()<CR>', desc = "Save project session" },
+		{ "<leader>sr", '<Cmd>lua MiniSessions.select("read")<CR>', desc = "Read" },
+		{ "<leader>sw", "<Cmd>lua MiniSessions.write()<CR>", desc = "Write current" },
 
-    -- Icons + nvim-web-devicons mock
-    local ext3_blocklist = { scm = true, txt = true, yml = true }
-    local ext4_blocklist = { json = true, yaml = true }
-    require('mini.icons').setup({
-      use_file_extension = function(ext, _)
-        return not (ext3_blocklist[ext:sub(-3)] or ext4_blocklist[ext:sub(-4)])
-      end,
-    })
-    vim.schedule(function()
-      MiniIcons.mock_nvim_web_devicons()
-      MiniIcons.tweak_lsp_kind()
-    end)
+		-- Visits (mini.visits)
+		{ "<leader>vv", '<Cmd>lua MiniVisits.add_label("core")<CR>', desc = 'Add "core" label' },
+		{ "<leader>vV", '<Cmd>lua MiniVisits.remove_label("core")<CR>', desc = 'Remove "core" label' },
+		{ "<leader>vl", "<Cmd>lua MiniVisits.add_label()<CR>", desc = "Add label" },
+		{ "<leader>vL", "<Cmd>lua MiniVisits.remove_label()<CR>", desc = "Remove label" },
 
-    require('mini.misc').setup()
-    MiniMisc.setup_auto_root()
-    MiniMisc.setup_restore_cursor()
-    MiniMisc.setup_termbg_sync()
+		-- Other (mini.misc, mini.trailspace)
+		{ "<leader>or", "<Cmd>lua MiniMisc.resize_window()<CR>", desc = "Resize to default width" },
+		{ "<leader>ot", "<Cmd>lua MiniTrailspace.trim()<CR>", desc = "Trim trailspace" },
+	},
+	config = function()
+		-- Step 1: modules needed for first draw ================================
 
-    require('mini.sessions').setup({
-      directory = vim.fn.stdpath('data') .. '/sessions',
-      autowrite = true,
-      hooks = {
-        pre = {
-          write = function()
-            for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-              local bt = vim.bo[buf].buftype
-              if bt == 'terminal' or bt == 'nofile' then
-                pcall(vim.api.nvim_buf_delete, buf, { force = true })
-              end
-            end
-          end,
-        },
-      },
-    })
+		require("mini.basics").setup({
+			options = { basic = false },
+			mappings = { windows = false, move_with_alt = true },
+		})
 
-    vim.api.nvim_create_autocmd('VimLeavePre', {
-      callback = function()
-        if vim.v.this_session ~= '' then
-          pcall(MiniSessions.write)
-        end
-      end,
-    })
+		-- Icons + nvim-web-devicons mock
+		local ext3_blocklist = { scm = true, txt = true, yml = true }
+		local ext4_blocklist = { json = true, yaml = true }
+		require("mini.icons").setup({
+			use_file_extension = function(ext, _)
+				return not (ext3_blocklist[ext:sub(-3)] or ext4_blocklist[ext:sub(-4)])
+			end,
+		})
+		vim.schedule(function()
+			MiniIcons.mock_nvim_web_devicons()
+			MiniIcons.tweak_lsp_kind()
+		end)
 
-    -- Step 2: deferred modules =============================================
+		require("mini.misc").setup()
+		MiniMisc.setup_auto_root()
+		MiniMisc.setup_restore_cursor()
+		MiniMisc.setup_termbg_sync()
 
-    vim.schedule(function()
-      local ai = require('mini.ai')
-      ai.setup({
-        custom_textobjects = {
-          F = ai.gen_spec.treesitter({ a = '@function.outer', i = '@function.inner' }),
-        },
-        search_method = 'cover',
-      })
+		require("mini.sessions").setup({
+			directory = vim.fn.stdpath("data") .. "/sessions",
+			autowrite = true,
+			hooks = {
+				pre = {
+					write = function()
+						for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+							local bt = vim.bo[buf].buftype
+							if bt == "terminal" or bt == "nofile" then
+								pcall(vim.api.nvim_buf_delete, buf, { force = true })
+							end
+						end
+					end,
+				},
+			},
+		})
 
-      require('mini.align').setup()
-      require('mini.bracketed').setup()
+		vim.api.nvim_create_autocmd("VimLeavePre", {
+			callback = function()
+				if vim.v.this_session ~= "" then
+					pcall(MiniSessions.write)
+				end
+			end,
+		})
 
-      require('mini.comment').setup()
-      require('mini.diff').setup()
+		-- Step 2: deferred modules =============================================
 
-      -- Git
-      require('mini.git').setup()
+		vim.schedule(function()
+			local ai = require("mini.ai")
+			ai.setup({
+				custom_textobjects = {
+					F = ai.gen_spec.treesitter({ a = "@function.outer", i = "@function.inner" }),
+				},
+				search_method = "cover",
+			})
 
-      local format_summary = function(data)
-        local summary = vim.b[data.buf].minigit_summary
-        if not summary then return end
-        local parts = {}
-        if summary.head_name then table.insert(parts, summary.head_name) end
-        local git_utils = require('utils.git')
-        local status = git_utils.get_ahead_behind()
-        if status.ahead > 0 then table.insert(parts, '↑' .. status.ahead) end
-        if status.behind > 0 then table.insert(parts, '↓' .. status.behind) end
-        if summary.in_progress and summary.in_progress ~= '' then
-          table.insert(parts, '[' .. summary.in_progress .. ']')
-        end
-        local conflicts = git_utils.count_conflicts(data.buf)
-        if conflicts > 0 then table.insert(parts, '⚠' .. conflicts) end
-        if summary.status then table.insert(parts, summary.status) end
-        vim.b[data.buf].minigit_summary_string = table.concat(parts, ' ')
-      end
+			require("mini.align").setup()
+			require("mini.bracketed").setup()
 
-      _G.Config.new_autocmd('User', 'MiniGitUpdated', format_summary, 'Format git summary')
-      _G.Config.new_autocmd('User', 'MiniGitUpdated', function()
-        require('utils.git').invalidate_cache()
-      end, 'Invalidate git status cache')
-      _G.Config.new_autocmd('User', 'MiniGitUpdated', function()
-        local git = require('utils.git')
-        if not git._fetch_timer then git.start_auto_fetch(1) end
-      end, 'Start background git fetch')
+			require("mini.comment").setup()
+			require("mini.diff").setup()
 
-      local align_blame = function(au_data)
-        if not au_data.data or au_data.data.git_subcommand ~= 'blame' then return end
-        local win_src = au_data.data.win_source
-        if not win_src or not vim.api.nvim_win_is_valid(win_src) then return end
-        local win_git = vim.api.nvim_get_current_win()
-        vim.wo[win_git].wrap = false
-        vim.fn.winrestview({ topline = vim.fn.line('w0', win_src) })
-        vim.api.nvim_win_set_cursor(win_git, { vim.fn.line('.', win_src), 0 })
-        vim.wo[win_src].scrollbind = true
-        vim.wo[win_git].scrollbind = true
-      end
-      _G.Config.new_autocmd('User', 'MiniGitCommandSplit', align_blame, 'Align blame output')
+			-- Git
+			require("mini.git").setup()
 
-      -- Hipatterns
-      local hipatterns = require('mini.hipatterns')
-      hipatterns.setup({
-        highlighters = {
-          fixme = { pattern = '%f[%w]()FIXME()%f[%W]', group = 'MiniHipatternsFixme' },
-          hack = { pattern = '%f[%w]()HACK()%f[%W]', group = 'MiniHipatternsHack' },
-          todo = { pattern = '%f[%w]()TODO()%f[%W]', group = 'MiniHipatternsTodo' },
-          note = { pattern = '%f[%w]()NOTE()%f[%W]', group = 'MiniHipatternsNote' },
-          hex_color = hipatterns.gen_highlighter.hex_color(),
-          tailwind = {
-            pattern = function()
-              local ft = vim.bo.filetype
-              local allowed = {
-                'html','css','scss','less','javascript','javascriptreact',
-                'typescript','typescriptreact','vue','svelte','astro',
-              }
-              if not vim.tbl_contains(allowed, ft) then return nil end
-              return '%f[%w:-]()[%w:-]+%-[a-z%-]+%-%d+/?%d*()%f[^%w:-]'
-            end,
-            group = function(_, _, match_data)
-              local match = match_data.full_match
-              local color, shade = match:match('[%w-]+%-([a-z%-]+)%-(%d+)')
-              shade = tonumber(shade)
-              local tw = require('utils.tailwind-colors')
-              local bg_hex = vim.tbl_get(tw.colors, color, shade)
-              if bg_hex then
-                local hl_group = 'MiniHipatternsTailwind' .. color .. shade
-                if not tw.hl_cache[hl_group] then
-                  tw.hl_cache[hl_group] = true
-                  local fg_shade = shade == 500 and 950 or shade < 500 and 900 or 100
-                  local fg_hex = vim.tbl_get(tw.colors, color, fg_shade)
-                  vim.api.nvim_set_hl(0, hl_group, { bg = '#' .. bg_hex, fg = '#' .. fg_hex })
-                end
-                return hl_group
-              end
-            end,
-            extmark_opts = { priority = 2000 },
-          },
-          git_conflict_start = { pattern = '^<<<<<<< .*', group = 'DiffDelete' },
-          git_conflict_sep = { pattern = '^=======', group = 'DiffChange' },
-          git_conflict_end = { pattern = '^>>>>>>> .*', group = 'DiffAdd' },
-        },
-      })
+			local format_summary = function(data)
+				local summary = vim.b[data.buf].minigit_summary
+				if not summary then
+					return
+				end
+				local parts = {}
+				if summary.head_name then
+					table.insert(parts, summary.head_name)
+				end
+				local git_utils = require("utils.git")
+				local status = git_utils.get_ahead_behind()
+				if status.ahead > 0 then
+					table.insert(parts, "↑" .. status.ahead)
+				end
+				if status.behind > 0 then
+					table.insert(parts, "↓" .. status.behind)
+				end
+				if summary.in_progress and summary.in_progress ~= "" then
+					table.insert(parts, "[" .. summary.in_progress .. "]")
+				end
+				local conflicts = git_utils.count_conflicts(data.buf)
+				if conflicts > 0 then
+					table.insert(parts, "⚠" .. conflicts)
+				end
+				if summary.status then
+					table.insert(parts, summary.status)
+				end
+				vim.b[data.buf].minigit_summary_string = table.concat(parts, " ")
+			end
 
-      require('mini.jump').setup()
-      require('mini.jump2d').setup()
+			_G.Config.new_autocmd("User", "MiniGitUpdated", format_summary, "Format git summary")
+			_G.Config.new_autocmd("User", "MiniGitUpdated", function()
+				require("utils.git").invalidate_cache()
+			end, "Invalidate git status cache")
+			_G.Config.new_autocmd("User", "MiniGitUpdated", function()
+				local git = require("utils.git")
+				if not git._fetch_timer then
+					git.start_auto_fetch(1)
+				end
+			end, "Start background git fetch")
 
-      require('mini.keymap').setup()
-      MiniKeymap.map_multistep('i', '<CR>', { 'minipairs_cr' })
-      MiniKeymap.map_multistep('i', '<BS>', { 'minipairs_bs' })
+			local align_blame = function(au_data)
+				if not au_data.data or au_data.data.git_subcommand ~= "blame" then
+					return
+				end
+				local win_src = au_data.data.win_source
+				if not win_src or not vim.api.nvim_win_is_valid(win_src) then
+					return
+				end
+				local win_git = vim.api.nvim_get_current_win()
+				vim.wo[win_git].wrap = false
+				vim.fn.winrestview({ topline = vim.fn.line("w0", win_src) })
+				vim.api.nvim_win_set_cursor(win_git, { vim.fn.line(".", win_src), 0 })
+				vim.wo[win_src].scrollbind = true
+				vim.wo[win_git].scrollbind = true
+			end
+			_G.Config.new_autocmd("User", "MiniGitCommandSplit", align_blame, "Align blame output")
 
-      require('mini.move').setup()
+			-- Hipatterns
+			local hipatterns = require("mini.hipatterns")
+			hipatterns.setup({
+				highlighters = {
+					fixme = { pattern = "%f[%w]()FIXME()%f[%W]", group = "MiniHipatternsFixme" },
+					hack = { pattern = "%f[%w]()HACK()%f[%W]", group = "MiniHipatternsHack" },
+					todo = { pattern = "%f[%w]()TODO()%f[%W]", group = "MiniHipatternsTodo" },
+					note = { pattern = "%f[%w]()NOTE()%f[%W]", group = "MiniHipatternsNote" },
+					hex_color = hipatterns.gen_highlighter.hex_color(),
+					tailwind = {
+						pattern = function()
+							local ft = vim.bo.filetype
+							local allowed = {
+								"html",
+								"css",
+								"scss",
+								"less",
+								"javascript",
+								"javascriptreact",
+								"typescript",
+								"typescriptreact",
+								"vue",
+								"svelte",
+								"astro",
+							}
+							if not vim.tbl_contains(allowed, ft) then
+								return nil
+							end
+							return "%f[%w:-]()[%w:-]+%-[a-z%-]+%-%d+/?%d*()%f[^%w:-]"
+						end,
+						group = function(_, _, match_data)
+							local match = match_data.full_match
+							local color, shade = match:match("[%w-]+%-([a-z%-]+)%-(%d+)")
+							shade = tonumber(shade)
+							local tw = require("utils.tailwind-colors")
+							local bg_hex = vim.tbl_get(tw.colors, color, shade)
+							if bg_hex then
+								local hl_group = "MiniHipatternsTailwind" .. color .. shade
+								if not tw.hl_cache[hl_group] then
+									tw.hl_cache[hl_group] = true
+									local fg_shade = shade == 500 and 950 or shade < 500 and 900 or 100
+									local fg_hex = vim.tbl_get(tw.colors, color, fg_shade)
+									vim.api.nvim_set_hl(0, hl_group, { bg = "#" .. bg_hex, fg = "#" .. fg_hex })
+								end
+								return hl_group
+							end
+						end,
+						extmark_opts = { priority = 2000 },
+					},
+					git_conflict_start = { pattern = "^<<<<<<< .*", group = "DiffDelete" },
+					git_conflict_sep = { pattern = "^=======", group = "DiffChange" },
+					git_conflict_end = { pattern = "^>>>>>>> .*", group = "DiffAdd" },
+				},
+			})
 
-      require('mini.operators').setup()
-      vim.keymap.set('n', '(', 'gxiagxila', { remap = true, desc = 'Swap arg left' })
-      vim.keymap.set('n', ')', 'gxiagxina', { remap = true, desc = 'Swap arg right' })
+			require("mini.jump").setup()
+			require("mini.jump2d").setup()
 
-      require('mini.pairs').setup({ modes = { command = true } })
+			require("mini.keymap").setup()
+			MiniKeymap.map_multistep("i", "<CR>", { "minipairs_cr" })
+			MiniKeymap.map_multistep("i", "<BS>", { "minipairs_bs" })
 
-      -- Snippets
-      local latex_patterns = { 'latex/**/*.json', '**/latex.json' }
-      local lang_patterns = {
-        tex = latex_patterns,
-        plaintex = latex_patterns,
-        markdown_inline = { 'markdown.json' },
-      }
-      local snippets = require('mini.snippets')
-      local config_path = vim.fn.stdpath('config')
-      snippets.setup({
-        snippets = {
-          snippets.gen_loader.from_file(config_path .. '/snippets/global.json'),
-          snippets.gen_loader.from_lang({ lang_patterns = lang_patterns }),
-        },
-      })
-      MiniSnippets.start_lsp_server()
+			require("mini.move").setup()
 
-      require('mini.splitjoin').setup()
-      require('mini.surround').setup()
-      require('mini.trailspace').setup()
-      require('mini.visits').setup()
-    end) -- end vim.schedule
-  end,
+			require("mini.operators").setup()
+			vim.keymap.set("n", "(", "gxiagxila", { remap = true, desc = "Swap arg left" })
+			vim.keymap.set("n", ")", "gxiagxina", { remap = true, desc = "Swap arg right" })
+
+			require("mini.pairs").setup({ modes = { command = true } })
+
+			-- Snippets
+			local latex_patterns = { "latex/**/*.json", "**/latex.json" }
+			local lang_patterns = {
+				tex = latex_patterns,
+				plaintex = latex_patterns,
+				markdown_inline = { "markdown.json" },
+			}
+			local snippets = require("mini.snippets")
+			local config_path = vim.fn.stdpath("config")
+			snippets.setup({
+				snippets = {
+					snippets.gen_loader.from_file(config_path .. "/snippets/global.json"),
+					snippets.gen_loader.from_lang({ lang_patterns = lang_patterns }),
+				},
+			})
+			MiniSnippets.start_lsp_server()
+
+			require("mini.splitjoin").setup()
+			require("mini.surround").setup()
+			require("mini.trailspace").setup()
+			require("mini.visits").setup()
+		end) -- end vim.schedule
+	end,
 }

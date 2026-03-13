@@ -91,11 +91,12 @@ vim.o.complete       = '.,w,b,kspell'                  -- Use less sources
 vim.o.completeopt    = 'menuone,noselect,fuzzy,nosort' -- Use custom behavior
 
 -- Big files ==================================================================
+-- Using Snacks.bigfile instead. Custom implementation commented out for reference
+-- in case we need to restore the more aggressive version (pre-read swap/undo disable,
+-- treesitter stop, diagnostics disable, etc.).
 
--- Disable expensive features for large files (>1.5 MB) to keep Neovim responsive.
--- Sets `vim.b.bigfile = true` so other plugins can check and skip work.
+--[[ Custom bigfile implementation (more aggressive than Snacks):
 local bigfile_threshold = 1.5 * 1024 * 1024 -- 1.5 MB
-
 local bigfile_group = vim.api.nvim_create_augroup('bigfile', { clear = true })
 
 vim.api.nvim_create_autocmd('BufReadPre', {
@@ -105,10 +106,7 @@ vim.api.nvim_create_autocmd('BufReadPre', {
     if path == '' then return end
     local ok, stat = pcall(vim.uv.fs_stat, path)
     if not ok or not stat or stat.size < bigfile_threshold then return end
-
     vim.b[args.buf].bigfile = true
-
-    -- Disable heavy buffer-local features before content is loaded
     vim.api.nvim_set_option_value('swapfile',  false, { buf = args.buf })
     vim.api.nvim_set_option_value('undofile',  false, { buf = args.buf })
     vim.api.nvim_set_option_value('undolevels', -1,   { buf = args.buf })
@@ -120,8 +118,6 @@ vim.api.nvim_create_autocmd('BufReadPost', {
   group = bigfile_group,
   callback = function(args)
     if not vim.b[args.buf].bigfile then return end
-
-    -- Window-scoped options (set for every window that displays this buffer)
     local function apply_win_opts(win)
       vim.api.nvim_set_option_value('foldmethod',  'manual', { win = win })
       vim.api.nvim_set_option_value('foldenable',  false,    { win = win })
@@ -131,52 +127,31 @@ vim.api.nvim_create_autocmd('BufReadPost', {
       vim.api.nvim_set_option_value('signcolumn',  'no',     { win = win })
       vim.api.nvim_set_option_value('colorcolumn', '',       { win = win })
     end
-
-    -- Apply to all windows currently showing this buffer
     for _, win in ipairs(vim.fn.win_findbuf(args.buf)) do
       apply_win_opts(win)
     end
-
-    -- Also apply when the buffer is displayed in a new window later
     vim.api.nvim_create_autocmd('BufWinEnter', {
-      group = bigfile_group,
-      buffer = args.buf,
-      callback = function()
-        apply_win_opts(vim.api.nvim_get_current_win())
-      end,
+      group = bigfile_group, buffer = args.buf,
+      callback = function() apply_win_opts(vim.api.nvim_get_current_win()) end,
       desc = 'Apply bigfile win opts on new window',
     })
-
-    -- Disable syntax highlighting and filetype plugins
     vim.cmd('syntax clear')
     vim.bo[args.buf].syntax = ''
     vim.bo[args.buf].filetype = ''
-
-    -- Stop treesitter if it was started
     pcall(vim.treesitter.stop, args.buf)
-
-    -- Disable mini modules that operate per-buffer
-    -- Each module checks if it's loaded before calling disable
-    local mini_modules = {
-      'MiniTrailspace', 'MiniDiff', 'MiniHipatterns',
-    }
+    local mini_modules = { 'MiniTrailspace', 'MiniDiff', 'MiniHipatterns' }
     for _, mod in ipairs(mini_modules) do
-      local m = _G[mod]
-      if m then
+      if _G[mod] then
         vim.b[args.buf]['mini' .. mod:sub(5):lower() .. '_disable'] = true
       end
     end
-
-    -- Disable diagnostics for this buffer
     vim.diagnostic.enable(false, { bufnr = args.buf })
-
-    -- Disable format on save
     vim.b[args.buf].disable_autoformat = true
-
     vim.notify('Big file detected — heavy features disabled', vim.log.levels.INFO)
   end,
   desc = 'Disable heavy features after reading a big file',
 })
+--]]
 
 -- Diagnostics ================================================================
 

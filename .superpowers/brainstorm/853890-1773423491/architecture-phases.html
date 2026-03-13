@@ -1,0 +1,188 @@
+<h2>Arquitectura & Plan de Migración</h2>
+<p class="subtitle">Estructura de archivos nueva y orden de ejecución por fases</p>
+
+<h3>📁 Estructura Actual → Nueva</h3>
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">Actual (mini.deps)</div>
+    <div class="mockup-body">
+<pre style="font-size:0.82em;line-height:1.6;margin:0;color:#cdd6f4">
+<span style="color:#89b4fa">init.lua</span>            ← bootstrap mini.deps
+<span style="color:#fab387">plugin/</span>
+  10_options.lua    ← vim options
+  20_keymaps.lua    ← all keymaps (400+ lines)
+  21_git_flow.lua   ← :GitFlow command
+  <span style="color:#f38ba8">30_mini.lua</span>       ← <strong>28 módulos en 1 archivo (1000+ líneas)</strong>
+  <span style="color:#f38ba8">40_plugins.lua</span>    ← todos los non-mini plugins
+  50_dap.lua        ← debugging
+  65_claudecode.lua ← claude
+<span style="color:#fab387">lua/utils/</span>
+  float-term.lua    ← floating terminal
+  git-conflict.lua  ← conflict resolution
+  git-flow.lua      ← git-flow wrapper
+  git.lua           ← git utilities
+  kitty-nav.lua     ← kitty navigation
+  pick-utils.lua    ← custom pickers
+  project-session.lua
+  root.lua
+  tailwind-colors.lua
+  <span style="color:#f38ba8">toggle.lua</span>        ← manual toggles
+<span style="color:#fab387">after/</span>             ← ftplugin, lsp, snippets
+</pre>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">Nueva (lazy.nvim)</div>
+    <div class="mockup-body">
+<pre style="font-size:0.82em;line-height:1.6;margin:0;color:#cdd6f4">
+<span style="color:#a6e3a1">init.lua</span>            ← bootstrap lazy.nvim
+<span style="color:#fab387">lua/</span>
+  <span style="color:#fab387">config/</span>
+    options.lua     ← vim options
+    keymaps.lua     ← keymaps base
+    autocmds.lua    ← autocommands extraídos
+  <span style="color:#a6e3a1"><strong>plugins/</strong></span>          ← <strong>1 archivo por plugin/grupo</strong>
+    snacks.lua      ← snacks.nvim (all modules)
+    mini.lua        ← 22 módulos mini restantes
+    lualine.lua     ← statusline
+    bufferline.lua  ← tabline
+    noice.lua       ← cmdline & messages
+    which-key.lua   ← key hints
+    catppuccin.lua  ← colorscheme
+    treesitter.lua  ← treesitter + textobjects
+    lsp.lua         ← nvim-lspconfig + mason
+    conform.lua     ← formatting
+    blink.lua       ← completion
+    dap.lua         ← debugging
+    claudecode.lua  ← claude code
+    editor.lua      ← diffview, grug-far, obsidian, etc.
+  <span style="color:#fab387">utils/</span>            ← se mantiene (limpio)
+    git-conflict.lua
+    git-flow.lua
+    git.lua
+    kitty-nav.lua
+    pick-utils.lua  ← adaptado a snacks.picker
+    project-session.lua
+    root.lua
+    tailwind-colors.lua
+<span style="color:#fab387">after/</span>             ← se mantiene igual
+</pre>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:8px;padding:10px 14px;background:rgba(166,227,161,0.1);border-radius:6px;font-size:0.88em">
+  <strong>Cambio clave:</strong> De 2 archivos monolíticos (30_mini.lua + 40_plugins.lua) a <strong>archivos modulares por plugin</strong>.
+  Cada plugin spec es autocontenido — config, keymaps, y lazy-loading en un solo lugar.
+</div>
+
+<h3 style="margin-top:32px">🔄 Fases de Migración</h3>
+<p class="subtitle">Cada fase deja el editor funcional. Se puede pausar entre fases.</p>
+
+<div style="display:flex;flex-direction:column;gap:16px;margin-top:16px">
+
+  <div style="padding:16px;background:rgba(203,166,247,0.08);border-radius:8px;border-left:4px solid #cba6f7">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <span style="background:#cba6f7;color:#1e1e2e;padding:2px 10px;border-radius:12px;font-weight:bold;font-size:0.85em">FASE 0</span>
+      <strong>Preparación</strong>
+    </div>
+    <ul style="margin:0;padding-left:20px;font-size:0.9em;line-height:1.7">
+      <li>Crear branch <code>feat/lazy-migration</code></li>
+      <li>Agregar <code>.superpowers/</code> a <code>.gitignore</code></li>
+      <li>Crear <code>lua/config/</code> — extraer options, keymaps, autocmds de <code>plugin/</code></li>
+      <li>Crear <code>lua/plugins/</code> vacío</li>
+    </ul>
+  </div>
+
+  <div style="padding:16px;background:rgba(137,180,250,0.08);border-radius:8px;border-left:4px solid #89b4fa">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <span style="background:#89b4fa;color:#1e1e2e;padding:2px 10px;border-radius:12px;font-weight:bold;font-size:0.85em">FASE 1</span>
+      <strong>Package Manager (mini.deps → lazy.nvim)</strong>
+      <span style="font-size:0.8em;opacity:0.6">— fundación, todo depende de esto</span>
+    </div>
+    <ul style="margin:0;padding-left:20px;font-size:0.9em;line-height:1.7">
+      <li>Reescribir <code>init.lua</code> con bootstrap de lazy.nvim</li>
+      <li>Convertir todos los <code>add()</code> / <code>now()</code> / <code>later()</code> a lazy specs</li>
+      <li>Migrar mini.nvim a specs individuales por módulo</li>
+      <li>Migrar plugins existentes (treesitter, LSP, conform, blink, etc.)</li>
+      <li><strong>Resultado:</strong> mismo editor, nuevo package manager — <code>:Lazy</code> funciona</li>
+    </ul>
+  </div>
+
+  <div style="padding:16px;background:rgba(166,227,161,0.08);border-radius:8px;border-left:4px solid #a6e3a1">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <span style="background:#a6e3a1;color:#1e1e2e;padding:2px 10px;border-radius:12px;font-weight:bold;font-size:0.85em">FASE 2</span>
+      <strong>UI Shell (statusline + tabline + cmdline)</strong>
+    </div>
+    <ul style="margin:0;padding-left:20px;font-size:0.9em;line-height:1.7">
+      <li>Instalar y configurar <code>lualine.nvim</code> con theme Catppuccin</li>
+      <li>Instalar y configurar <code>bufferline.nvim</code> con Catppuccin</li>
+      <li>Instalar y configurar <code>noice.nvim</code> (cmdline floating, LSP progress)</li>
+      <li>Remover <code>mini.statusline</code> y <code>mini.tabline</code></li>
+      <li><strong>Resultado:</strong> statusline, tabline y cmdline modernos</li>
+    </ul>
+  </div>
+
+  <div style="padding:16px;background:rgba(249,226,175,0.08);border-radius:8px;border-left:4px solid #f9e2af">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <span style="background:#f9e2af;color:#1e1e2e;padding:2px 10px;border-radius:12px;font-weight:bold;font-size:0.85em">FASE 3</span>
+      <strong>snacks.nvim (core UI + features nuevos)</strong>
+      <span style="font-size:0.8em;opacity:0.6">— mayor impacto visual</span>
+    </div>
+    <ul style="margin:0;padding-left:20px;font-size:0.9em;line-height:1.7">
+      <li>Instalar snacks.nvim y configurar todos los módulos:</li>
+      <li style="list-style:none;padding-left:12px;opacity:0.85">
+        <strong>Reemplazos:</strong> dashboard, notifier, picker, explorer, indent, scroll, bufdelete, words
+      </li>
+      <li style="list-style:none;padding-left:12px;opacity:0.85">
+        <strong>Nuevos:</strong> animate, zen, dim, image, input, rename, lazygit, terminal, statuscolumn, toggle
+      </li>
+      <li>Remover módulos mini reemplazados</li>
+      <li>Adaptar <code>pick-utils.lua</code> para snacks.picker</li>
+      <li>Reemplazar <code>float-term.lua</code> con snacks.terminal</li>
+      <li>Reemplazar <code>toggle.lua</code> con snacks.toggle</li>
+      <li><strong>Resultado:</strong> toda la UI usando snacks — look cohesivo</li>
+    </ul>
+  </div>
+
+  <div style="padding:16px;background:rgba(243,139,168,0.08);border-radius:8px;border-left:4px solid #f38ba8">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <span style="background:#f38ba8;color:#1e1e2e;padding:2px 10px;border-radius:12px;font-weight:bold;font-size:0.85em">FASE 4</span>
+      <strong>which-key.nvim + Keymaps</strong>
+    </div>
+    <ul style="margin:0;padding-left:20px;font-size:0.9em;line-height:1.7">
+      <li>Instalar <code>which-key.nvim</code> con groups e iconos</li>
+      <li>Migrar descripciones de <code>mini.clue</code></li>
+      <li>Migrar keymaps de plugins a sus respectivos lazy specs</li>
+      <li>Remover <code>mini.clue</code></li>
+      <li><strong>Resultado:</strong> key hints modernos y keymaps colocados</li>
+    </ul>
+  </div>
+
+  <div style="padding:16px;background:rgba(148,226,213,0.08);border-radius:8px;border-left:4px solid #94e2d5">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <span style="background:#94e2d5;color:#1e1e2e;padding:2px 10px;border-radius:12px;font-weight:bold;font-size:0.85em">FASE 5</span>
+      <strong>Cleanup & Polish</strong>
+    </div>
+    <ul style="margin:0;padding-left:20px;font-size:0.9em;line-height:1.7">
+      <li>Eliminar archivos obsoletos (<code>plugin/30_mini.lua</code>, <code>plugin/40_plugins.lua</code>, <code>mini-deps-snap</code>)</li>
+      <li>Eliminar utils reemplazados (<code>float-term.lua</code>, <code>toggle.lua</code>)</li>
+      <li>Verificar que Catppuccin integra bien con todos los plugins nuevos</li>
+      <li>Ajustar highlights y colores para cohesión</li>
+      <li>Profile startup time con <code>:Lazy profile</code></li>
+      <li><strong>Resultado:</strong> config limpia, moderna, cohesiva</li>
+    </ul>
+  </div>
+
+</div>
+
+<div class="section" style="margin-top:24px;padding:16px;background:rgba(137,180,250,0.1);border-radius:8px;border-left:3px solid rgba(137,180,250,0.5)">
+  <h3 style="margin-top:0">⚡ Estrategia de seguridad</h3>
+  <ul style="margin:0;padding-left:20px;font-size:0.9em;line-height:1.8">
+    <li>Todo en un branch <code>feat/lazy-migration</code> — main queda intacto</li>
+    <li>Cada fase termina con un commit funcional — se puede pausar o revertir</li>
+    <li>Los keymaps se mantienen idénticos — solo cambia el backend</li>
+    <li>mini.nvim se queda instalado como dependencia de lazy.nvim (no se borra)</li>
+  </ul>
+</div>

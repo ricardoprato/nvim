@@ -1,0 +1,124 @@
+<h2>Migración mini.deps → lazy.nvim + UI Modernization</h2>
+<p class="subtitle">3 enfoques para modernizar tu editor. Clickeá el que más te convenza.</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>🎨 Snacks Takeover + Premium UI</h3>
+      <p><strong>Máximo eye candy.</strong> Snacks.nvim para toda la UI core + plugins premium para statusline y tabline.</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>✓ Ganas</h4>
+          <ul>
+            <li>Dashboard animado con ASCII art</li>
+            <li>Picker moderno con previews estilizados</li>
+            <li>Notificaciones animadas y elegantes</li>
+            <li>Indent guides animados con scope highlighting</li>
+            <li>Smooth scroll + scrollbar</li>
+            <li>Zen mode, dim inactive code</li>
+            <li><strong>bufferline.nvim</strong> — tabline con iconos, colores, separadores curvos</li>
+            <li><strong>lualine.nvim</strong> — statusline con secciones, iconos, themes Catppuccin</li>
+            <li><strong>noice.nvim</strong> — cmdline floating, mensajes estilizados, LSP progress</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>✗ Trade-offs</h4>
+          <ul>
+            <li>Más plugins que mantener (~5 nuevos)</li>
+            <li>Mayor complejidad de config</li>
+            <li>Posible impacto en startup time (mitigado con lazy-loading)</li>
+          </ul>
+        </div>
+      </div>
+      <p style="margin-top:12px;padding:8px 12px;background:rgba(166,227,161,0.15);border-radius:6px;font-size:0.9em">
+        <strong>Reemplaza:</strong> mini.notify → snacks.notifier · mini.pick → snacks.picker · mini.starter → snacks.dashboard · mini.files → snacks.explorer · mini.indentscope → snacks.indent · mini.map → snacks.scroll · mini.statusline → lualine · mini.tabline → bufferline · mini.clue → which-key · mini.bufremove → snacks.bufdelete · mini.cursorword → snacks.words
+      </p>
+      <p style="padding:8px 12px;background:rgba(137,180,250,0.15);border-radius:6px;font-size:0.9em">
+        <strong>Mantiene mini.nvim:</strong> ai · surround · operators · pairs · align · move · splitjoin · jump · jump2d · bracketed · comment · diff · git · hipatterns · sessions · visits · snippets · trailspace · icons · misc · basics
+      </p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>⚡ Snacks Core + Mini Text</h3>
+      <p><strong>Balance óptimo.</strong> Snacks para toda la UI visible, mini.nvim solo para text manipulation.</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>✓ Ganas</h4>
+          <ul>
+            <li>Todo lo visual de snacks (dashboard, picker, notify, indent, scroll)</li>
+            <li>snacks.statuscolumn para columna lateral</li>
+            <li>Zen mode + dim + image support</li>
+            <li>Menos plugins externos que A (sin lualine/bufferline/noice)</li>
+            <li>Statusline y tabline quedan en mini (funcionales, no premium)</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>✗ Trade-offs</h4>
+          <ul>
+            <li>Statusline/tabline siguen con look mini (menos visual)</li>
+            <li>Sin cmdline floating (noice)</li>
+            <li>El look no es 100% cohesivo — mix de estilos snacks + mini</li>
+          </ul>
+        </div>
+      </div>
+      <p style="margin-top:12px;padding:8px 12px;background:rgba(166,227,161,0.15);border-radius:6px;font-size:0.9em">
+        <strong>Reemplaza:</strong> mini.notify → snacks.notifier · mini.pick → snacks.picker · mini.starter → snacks.dashboard · mini.files → snacks.explorer · mini.indentscope → snacks.indent · mini.map → snacks.scroll · mini.clue → which-key · mini.bufremove → snacks.bufdelete · mini.cursorword → snacks.words
+      </p>
+      <p style="padding:8px 12px;background:rgba(249,226,175,0.15);border-radius:6px;font-size:0.9em">
+        <strong>Mantiene mini.nvim (UI):</strong> statusline · tabline · (todo lo de text manipulation de A)
+      </p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>🔧 Selective Upgrade</h3>
+      <p><strong>Mínima disrupción.</strong> Solo reemplaza los 4-5 componentes de mayor impacto visual.</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>✓ Ganas</h4>
+          <ul>
+            <li>Dashboard con snacks (mayor impacto visual)</li>
+            <li>Notificaciones animadas</li>
+            <li>Smooth scroll</li>
+            <li>Migración más fácil y rápida</li>
+            <li>Menor riesgo de romper workflows</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>✗ Trade-offs</h4>
+          <ul>
+            <li>Picker queda en mini.pick (funcional pero menos visual)</li>
+            <li>File explorer queda en mini.files</li>
+            <li>No es una modernización completa</li>
+            <li>Mix de estilos más notorio</li>
+          </ul>
+        </div>
+      </div>
+      <p style="margin-top:12px;padding:8px 12px;background:rgba(166,227,161,0.15);border-radius:6px;font-size:0.9em">
+        <strong>Reemplaza:</strong> mini.starter → snacks.dashboard · mini.notify → snacks.notifier · mini.map → snacks.scroll · mini.indentscope → snacks.indent
+      </p>
+      <p style="padding:8px 12px;background:rgba(249,226,175,0.15);border-radius:6px;font-size:0.9em">
+        <strong>Mantiene todo lo demás de mini.nvim</strong> (picker, files, statusline, tabline, clue, etc.)
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;padding:16px;background:rgba(203,166,247,0.1);border-radius:8px;border-left:3px solid rgba(203,166,247,0.5)">
+  <h3 style="margin-top:0">💡 Recomendación</h3>
+  <p>
+    <strong>Enfoque A</strong> es el que mejor se alinea con lo que pediste: UI moderna, cohesiva, eye candy máximo.
+    La combinación <strong>snacks + bufferline + lualine + noice</strong> es el stack más popular del ecosistema Neovim
+    para configs visualmente pulidas. Todos tienen soporte nativo para Catppuccin.
+  </p>
+  <p style="font-size:0.9em;opacity:0.8">
+    Los ~21 módulos de mini.nvim que quedan (text manipulation, git, sessions, etc.) no tienen mejor alternativa —
+    son excelentes y no afectan la UI. Es el mejor de ambos mundos.
+  </p>
+</div>

@@ -1,39 +1,55 @@
 return {
-  {
-    'nvim-treesitter/nvim-treesitter',
-    branch = 'main',
-    event = { 'BufReadPost', 'BufNewFile' },
-    build = ':TSUpdate',
-    config = function()
-      local languages = {
-        'lua', 'vimdoc', 'markdown', 'markdown_inline',
-        'python', 'xml', 'html', 'css',
-        'javascript', 'typescript', 'tsx', 'jsx', 'astro',
-        'bash', 'json', 'yaml', 'toml',
-        'dockerfile', 'gitcommit', 'diff', 'query', 'http',
-      }
-      local isnt_installed = function(lang)
-        return #vim.api.nvim_get_runtime_file('parser/' .. lang .. '.*', false) == 0
-      end
-      local to_install = vim.tbl_filter(isnt_installed, languages)
-      if #to_install > 0 then
-        require('nvim-treesitter').install(to_install)
-      end
+	{
+		"nvim-treesitter/nvim-treesitter",
+		branch = "main",
+		lazy = false,
+		build = ":TSUpdate",
+		config = function()
+			local languages = {
+				"lua",
+				"vimdoc",
+				"markdown",
+				"markdown_inline",
+				"python",
+				"xml",
+				"html",
+				"css",
+				"javascript",
+				"typescript",
+				"tsx",
+				"jsx",
+				"astro",
+				"bash",
+				"json",
+				"yaml",
+				"toml",
+				"dockerfile",
+				"gitcommit",
+				"diff",
+				"query",
+				"http",
+			}
 
-      local filetypes = {}
-      for _, lang in ipairs(languages) do
-        for _, ft in ipairs(vim.treesitter.language.get_filetypes(lang)) do
-          table.insert(filetypes, ft)
-        end
-      end
-      _G.Config.new_autocmd('FileType', filetypes, function(ev)
-        vim.treesitter.start(ev.buf)
-      end, 'Start tree-sitter')
-    end,
-  },
-  {
-    'nvim-treesitter/nvim-treesitter-textobjects',
-    branch = 'main',
-    event = { 'BufReadPost', 'BufNewFile' },
-  },
+			-- Install missing parsers (async, but runs early thanks to lazy=false)
+			local missing = vim.tbl_filter(function(lang)
+				return #vim.api.nvim_get_runtime_file("parser/" .. lang .. ".*", false) == 0
+			end, languages)
+			if #missing > 0 then
+				require("nvim-treesitter").install(missing)
+			end
+
+			-- Enable highlighting via FileType — registered before any buffer needs it
+			vim.api.nvim_create_autocmd("FileType", {
+				callback = function(ev)
+					pcall(vim.treesitter.start, ev.buf)
+				end,
+				desc = "Start tree-sitter highlighting",
+			})
+		end,
+	},
+	{
+		"nvim-treesitter/nvim-treesitter-textobjects",
+		branch = "main",
+		event = { "BufReadPost", "BufNewFile" },
+	},
 }
