@@ -17,10 +17,9 @@ return {
         mason = true,
         mini = { enabled = true, indentscope_color = 'mocha' },
         dap = true,
-        -- New integrations (added progressively in later phases)
-        -- noice = true,
-        -- which_key = true,
-        -- snacks = true,
+        noice = true,
+        -- which_key = true, -- Phase 4
+        -- snacks = true, -- Phase 3a
       },
     })
     -- Note: changed from 'catppuccin-nvim' (repo-name artifact in mini.deps) to
