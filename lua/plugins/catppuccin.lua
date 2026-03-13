@@ -19,7 +19,7 @@ return {
         dap = true,
         noice = true,
         -- which_key = true, -- Phase 4
-        -- snacks = true, -- Phase 3a
+        snacks = true,
       },
     })
     -- Note: changed from 'catppuccin-nvim' (repo-name artifact in mini.deps) to

@@ -28,19 +28,6 @@ return {
     MiniMisc.setup_restore_cursor()
     MiniMisc.setup_termbg_sync()
 
-    -- Notifications (will be replaced by snacks.notifier in Phase 3a)
-    require('mini.notify').setup({
-      content = {
-        sort = function(notif_arr)
-          notif_arr = vim.tbl_filter(function(notif)
-            return not notif.msg:find(': %(%d+%%%%)%s*$')
-          end, notif_arr)
-          table.sort(notif_arr, function(a, b) return a.ts_update < b.ts_update end)
-          return notif_arr
-        end,
-      },
-    })
-
     require('mini.sessions').setup({
       directory = vim.fn.stdpath('data') .. '/sessions',
       autowrite = true,
@@ -66,18 +53,12 @@ return {
       end,
     })
 
-    -- Starter (will be replaced by snacks.dashboard in Phase 3a)
-    require('mini.starter').setup()
-
     -- Step 2: deferred modules =============================================
 
     vim.schedule(function()
-      require('mini.extra').setup()
-
       local ai = require('mini.ai')
       ai.setup({
         custom_textobjects = {
-          B = MiniExtra.gen_ai_spec.buffer(),
           F = ai.gen_spec.treesitter({ a = '@function.outer', i = '@function.inner' }),
         },
         search_method = 'cover',
@@ -85,7 +66,6 @@ return {
 
       require('mini.align').setup()
       require('mini.bracketed').setup()
-      require('mini.bufremove').setup()
 
       -- Clue (will be replaced by which-key in Phase 4)
       local miniclue = require('mini.clue')
@@ -126,30 +106,7 @@ return {
       })
 
       require('mini.comment').setup()
-      require('mini.cursorword').setup()
       require('mini.diff').setup()
-
-      -- Files (will be replaced by snacks.explorer in Phase 3a)
-      require('mini.files').setup({ windows = { preview = true } })
-      local add_marks = function()
-        MiniFiles.set_bookmark('c', vim.fn.stdpath('config'), { desc = 'Config' })
-        MiniFiles.set_bookmark('p', vim.fn.stdpath('data') .. '/lazy', { desc = 'Plugins' }) -- Changed from /site/pack/deps/opt to /lazy for lazy.nvim
-        MiniFiles.set_bookmark('w', vim.fn.getcwd(), { desc = 'Working directory' })
-      end
-      _G.Config.new_autocmd('User', 'MiniFilesExplorerOpen', add_marks, 'Add bookmarks')
-
-      _G.Config.new_autocmd('User', 'MiniFilesBufferCreate', function(args)
-        local buf_id = args.data.buf_id
-        vim.keymap.set('n', '<C-g>', function()
-          local entry = MiniFiles.get_fs_entry()
-          if not entry then return end
-          local dir = entry.fs_type == 'directory' and entry.path or vim.fs.dirname(entry.path)
-          MiniFiles.close()
-          vim.schedule(function()
-            require('utils.float-term').lazygit(dir)
-          end)
-        end, { buffer = buf_id, desc = 'Open Lazygit' })
-      end, 'Add git keymaps to mini.files')
 
       -- Git
       require('mini.git').setup()
@@ -196,13 +153,12 @@ return {
 
       -- Hipatterns
       local hipatterns = require('mini.hipatterns')
-      local hi_words = MiniExtra.gen_highlighter.words
       hipatterns.setup({
         highlighters = {
-          fixme = hi_words({ 'FIXME', 'Fixme', 'fixme' }, 'MiniHipatternsFixme'),
-          hack = hi_words({ 'HACK', 'Hack', 'hack' }, 'MiniHipatternsHack'),
-          todo = hi_words({ 'TODO', 'Todo', 'todo' }, 'MiniHipatternsTodo'),
-          note = hi_words({ 'NOTE', 'Note', 'note' }, 'MiniHipatternsNote'),
+          fixme = { pattern = '%f[%w]()FIXME()%f[%W]', group = 'MiniHipatternsFixme' },
+          hack = { pattern = '%f[%w]()HACK()%f[%W]', group = 'MiniHipatternsHack' },
+          todo = { pattern = '%f[%w]()TODO()%f[%W]', group = 'MiniHipatternsTodo' },
+          note = { pattern = '%f[%w]()NOTE()%f[%W]', group = 'MiniHipatternsNote' },
           hex_color = hipatterns.gen_highlighter.hex_color(),
           tailwind = {
             pattern = function()
@@ -239,29 +195,12 @@ return {
         },
       })
 
-      -- Indentscope (will be replaced by snacks.indent in Phase 3a)
-      require('mini.indentscope').setup()
-
       require('mini.jump').setup()
       require('mini.jump2d').setup()
 
       require('mini.keymap').setup()
       MiniKeymap.map_multistep('i', '<CR>', { 'minipairs_cr' })
       MiniKeymap.map_multistep('i', '<BS>', { 'minipairs_bs' })
-
-      -- Map (will be replaced by snacks.scroll in Phase 3a)
-      local minimap = require('mini.map')
-      minimap.setup({
-        symbols = { encode = minimap.gen_encode_symbols.dot('4x2') },
-        integrations = {
-          minimap.gen_integration.builtin_search(),
-          minimap.gen_integration.diff(),
-          minimap.gen_integration.diagnostic(),
-        },
-      })
-      for _, key in ipairs({ 'n', 'N', '*', '#' }) do
-        vim.keymap.set('n', key, key .. 'zv<Cmd>lua MiniMap.refresh({}, { lines = false, scrollbar = false })<CR>')
-      end
 
       require('mini.move').setup()
 
@@ -270,11 +209,6 @@ return {
       vim.keymap.set('n', ')', 'gxiagxina', { remap = true, desc = 'Swap arg right' })
 
       require('mini.pairs').setup({ modes = { command = true } })
-
-      -- Pick (will be replaced by snacks.picker in Phase 3a)
-      require('mini.pick').setup()
-      local pick_utils = require('utils.pick-utils')
-      MiniPick.registry.repos = pick_utils.project_picker
 
       -- Snippets
       local latex_patterns = { 'latex/**/*.json', '**/latex.json' }

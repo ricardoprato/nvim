@@ -16,7 +16,6 @@ _G.Config.leader_group_clues = {
   { mode = 'n', keys = '<Leader>gc', desc = '+Conflict' },
   { mode = 'n', keys = '<Leader>gf', desc = '+Flow' },
   { mode = 'n', keys = '<Leader>l', desc = '+Language' },
-  { mode = 'n', keys = '<Leader>m', desc = '+Map' },
   { mode = 'n', keys = '<Leader>n', desc = '+Notes (Obsidian)' },
   { mode = 'n', keys = '<Leader>o', desc = '+Other' },
   { mode = 'n', keys = '<Leader>r', desc = '+Replace' },
@@ -114,11 +113,7 @@ local new_scratch_buffer = function()
 end
 
 nmap_leader("ba", "<Cmd>b#<CR>", "Alternate")
-nmap_leader("bd", "<Cmd>lua MiniBufremove.delete()<CR>", "Delete")
-nmap_leader("bD", "<Cmd>lua MiniBufremove.delete(0, true)<CR>", "Delete!")
 nmap_leader("bs", new_scratch_buffer, "Scratch")
-nmap_leader("bw", "<Cmd>lua MiniBufremove.wipeout()<CR>", "Wipeout")
-nmap_leader("bW", "<Cmd>lua MiniBufremove.wipeout(0, true)<CR>", "Wipeout!")
 nmap_leader("bo", "<Cmd>%bd|e#<CR>", "Delete all!")
 
 -- a is for 'AI' (Claude Code CLI). Common usage:
@@ -134,7 +129,7 @@ xmap_leader("as", "<Cmd>ClaudeCodeSend<CR>", "Send selection to Claude")
 
 -- Add file from explorer to Claude Code context (filetype-scoped)
 vim.api.nvim_create_autocmd("FileType", {
-	pattern = { "minifiles", "netrw" },
+	pattern = { "snacks_explorer", "netrw" },
 	callback = function(args)
 		vim.keymap.set("n", "<Leader>as", "<Cmd>ClaudeCodeTreeAdd<CR>", {
 			buffer = args.buf,
@@ -144,15 +139,12 @@ vim.api.nvim_create_autocmd("FileType", {
 })
 
 -- e is for 'Explore' and 'Edit'. Common usage:
--- - `<Leader>ed` - open explorer at current working directory
--- - `<Leader>ef` - open directory of current file (needs to be present on disk)
 -- - `<Leader>ei` - edit 'init.lua'
 -- - All mappings that use `edit_plugin_file` - edit 'plugin/' config files
+-- NOTE: <Leader>ed, ef, en, eo are now in snacks.lua
 local edit_plugin_file = function(filename)
 	return string.format("<Cmd>edit %s/plugin/%s<CR>", vim.fn.stdpath("config"), filename)
 end
-local explore_at_file =
-	"<Cmd>lua local p = vim.api.nvim_buf_get_name(0); MiniFiles.open(vim.uv.fs_stat(p) and p or nil)<CR>"
 local explore_quickfix = function()
 	for _, win_id in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
 		if vim.fn.getwininfo(win_id)[1].quickfix == 1 then
@@ -162,13 +154,9 @@ local explore_quickfix = function()
 	vim.cmd("copen")
 end
 
-nmap_leader("ed", "<Cmd>lua MiniFiles.open()<CR>", "Directory")
-nmap_leader("ef", explore_at_file, "File directory")
 nmap_leader("ei", "<Cmd>edit $MYVIMRC<CR>", "init.lua")
 nmap_leader("ek", edit_plugin_file("20_keymaps.lua"), "Keymaps config")
 nmap_leader("em", edit_plugin_file("30_mini.lua"), "MINI config")
-nmap_leader("en", "<Cmd>lua MiniNotify.show_history()<CR>", "Notifications")
-nmap_leader("eo", edit_plugin_file("10_options.lua"), "Options config")
 nmap_leader("ep", edit_plugin_file("40_plugins.lua"), "Plugins config")
 nmap_leader("eq", explore_quickfix, "Quickfix")
 
@@ -188,47 +176,6 @@ nmap_leader(
 	"Replace in file"
 )
 xmap_leader("rr", ':<C-u>lua require("grug-far").with_visual_selection()<CR>', "Replace selection")
-
--- f is for 'Fuzzy Find'. Common usage:
--- - `<Leader>ff` - find files; for best performance requires `ripgrep`
--- - `<Leader>fg` - find inside files; requires `ripgrep`
--- - `<Leader>fh` - find help tag
--- - `<Leader>fr` - resume latest picker
--- - `<Leader>fv` - all visited paths; requires 'mini.visits'
---
--- All these use 'mini.pick'. See `:h MiniPick-overview` for an overview.
-local pick_added_hunks_buf = '<Cmd>Pick git_hunks path="%" scope="staged"<CR>'
-local pick_workspace_symbols_live = '<Cmd>Pick lsp scope="workspace_symbol_live"<CR>'
-local pick_utils = require("utils.pick-utils")
-
-nmap_leader("f/", '<Cmd>Pick history scope="/"<CR>', '"/" history')
-nmap_leader("f:", '<Cmd>Pick history scope=":"<CR>', '":" history')
-nmap_leader("fa", '<Cmd>Pick git_hunks scope="staged"<CR>', "Added hunks (all)")
-nmap_leader("fA", pick_added_hunks_buf, "Added hunks (buf)")
-nmap_leader("fb", "<Cmd>Pick buffers<CR>", "Buffers")
-nmap_leader("fB", '<Cmd>lua require("utils.pick-utils").git_branch_files()<CR>', "Git status (all files)")
-nmap_leader("fc", "<Cmd>Pick git_commits<CR>", "Commits (all)")
-nmap_leader("fC", '<Cmd>Pick git_commits path="%"<CR>', "Commits (buf)")
-nmap_leader("fd", '<Cmd>Pick diagnostic scope="all"<CR>', "Diagnostic workspace")
-nmap_leader("fD", '<Cmd>Pick diagnostic scope="current"<CR>', "Diagnostic buffer")
-nmap_leader("fF", "<Cmd>Pick files<CR>", "Files (local)")
-nmap_leader("fG", "<Cmd>Pick grep_live<CR>", "Grep live (local)")
-nmap_leader("ff", pick_utils.global_files, "Files (global)")
-nmap_leader("fg", pick_utils.global_grep, "Grep live (global)")
-nmap_leader("fw", '<Cmd>Pick grep pattern="<cword>"<CR>', "Grep current word")
-nmap_leader("fh", "<Cmd>Pick help<CR>", "Help tags")
-nmap_leader("fH", "<Cmd>Pick hl_groups<CR>", "Highlight groups")
-nmap_leader("fl", '<Cmd>Pick buf_lines scope="all"<CR>', "Lines (all)")
-nmap_leader("fL", '<Cmd>Pick buf_lines scope="current"<CR>', "Lines (buf)")
-nmap_leader("fm", "<Cmd>Pick git_hunks<CR>", "Modified hunks (all)")
-nmap_leader("fM", '<Cmd>Pick git_hunks path="%"<CR>', "Modified hunks (buf)")
-nmap_leader("fr", "<Cmd>Pick resume<CR>", "Resume")
-nmap_leader("fR", '<Cmd>Pick lsp scope="references"<CR>', "References (LSP)")
-nmap_leader("fs", pick_workspace_symbols_live, "Symbols workspace (live)")
-nmap_leader("fS", '<Cmd>Pick lsp scope="document_symbol"<CR>', "Symbols document")
-nmap_leader("fp", "<Cmd>Pick repos<CR>", "Projects/Repos")
-nmap_leader("fv", '<Cmd>Pick visit_paths cwd=""<CR>', "Visit paths (all)")
-nmap_leader("fV", "<Cmd>Pick visit_paths<CR>", "Visit paths (cwd)")
 
 -- g is for 'Git'. Common usage:
 -- - `<Leader>gs` - show information at cursor
@@ -251,7 +198,7 @@ nmap_leader("gs", "<Cmd>lua MiniGit.show_at_cursor()<CR>", "Show at cursor")
 nmap_leader("gP", "<Cmd>Git push<CR>", "Git push")
 nmap_leader("gp", "<Cmd>Git pull --rebase<CR>", "Git pull")
 nmap_leader("gb", "<Cmd>vertical Git blame -- %<CR>", "Git blame")
-nmap_leader("gB", "<Cmd>Pick git_branches<CR>", "Git branches")
+nmap_leader("gB", "<Cmd>lua Snacks.picker.git_branches()<CR>", "Git branches")
 nmap_leader("gv", "<Cmd>DiffviewOpen<CR>", "Diffview open")
 nmap_leader("gV", "<Cmd>DiffviewClose<CR>", "Diffview close")
 nmap_leader("g-", "<Cmd>Git checkout -<CR>", "Git checkout -")
@@ -327,28 +274,11 @@ vim.api.nvim_create_autocmd("LspAttach", {
 	end,
 })
 
--- m is for 'Map'. Common usage:
--- - `<Leader>mt` - toggle map from 'mini.map' (closed by default)
--- - `<Leader>mf` - focus on the map for fast navigation
--- - `<Leader>ms` - change map's side (if it covers something underneath)
-nmap_leader("mf", "<Cmd>lua MiniMap.toggle_focus()<CR>", "Focus (toggle)")
-nmap_leader("mr", "<Cmd>lua MiniMap.refresh()<CR>", "Refresh")
-nmap_leader("ms", "<Cmd>lua MiniMap.toggle_side()<CR>", "Side (toggle)")
-nmap_leader("mt", "<Cmd>lua MiniMap.toggle()<CR>", "Toggle")
-
 -- o is for 'Other'. Common usage:
--- - `<Leader>oz` - toggle between "zoomed" and regular view of current buffer
--- - `<Leader>ofb` / `<Leader>ofg` - toggle format on save for buffer/globally
+-- NOTE: <Leader>oz (zen), <Leader>od (dim) are now in snacks.lua
+-- NOTE: Toggle mappings (\s, \w, \r, \d, \h) are now in snacks.lua
 nmap_leader("or", "<Cmd>lua MiniMisc.resize_window()<CR>", "Resize to default width")
 nmap_leader("ot", "<Cmd>lua MiniTrailspace.trim()<CR>", "Trim trailspace")
-nmap_leader("oz", "<Cmd>lua MiniMisc.zoom()<CR>", "Zoom toggle")
-
--- Toggle utilities
-nmap_leader("ofb", '<Cmd>lua require("utils.toggle").format("buffer")<CR>', "Toggle format (buffer)")
-nmap_leader("ofg", '<Cmd>lua require("utils.toggle").format("global")<CR>', "Toggle format (global)")
-nmap_leader("odb", '<Cmd>lua require("utils.toggle").diagnostics("buffer")<CR>', "Toggle diagnostics (buffer)")
-nmap_leader("odg", '<Cmd>lua require("utils.toggle").diagnostics("global")<CR>', "Toggle diagnostics (global)")
-nmap_leader("oh", '<Cmd>lua require("utils.toggle").inlay_hints()<CR>', "Toggle inlay hints")
 
 -- s is for 'Session'. Common usage:
 -- - `<Leader>sn` - start new session
@@ -365,9 +295,6 @@ nmap_leader("sw", "<Cmd>lua MiniSessions.write()<CR>", "Write current")
 -- t is for 'Terminal'
 nmap_leader("tT", "<Cmd>horizontal term<CR>", "Terminal (horizontal)")
 nmap_leader("tt", "<Cmd>vertical term<CR>", "Terminal (vertical)")
-nmap_leader("tf", '<Cmd>lua require("utils.float-term").shell()<CR>', "Terminal (float)")
-nmap_leader("tg", '<Cmd>lua require("utils.float-term").lazygit()<CR>', "Lazygit")
-nmap_leader("td", '<Cmd>lua require("utils.float-term").lazydocker()<CR>', "Lazydocker")
 
 local map = vim.keymap.set
 -- [[ Terminal Window Navigation ]]

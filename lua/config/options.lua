@@ -158,8 +158,7 @@ vim.api.nvim_create_autocmd('BufReadPost', {
     -- Disable mini modules that operate per-buffer
     -- Each module checks if it's loaded before calling disable
     local mini_modules = {
-      'MiniIndentscope', 'MiniCursorword', 'MiniTrailspace',
-      'MiniDiff', 'MiniHipatterns', 'MiniMap',
+      'MiniTrailspace', 'MiniDiff', 'MiniHipatterns',
     }
     for _, mod in ipairs(mini_modules) do
       local m = _G[mod]
