@@ -1,0 +1,28 @@
+return {
+  'folke/which-key.nvim',
+  event = 'VeryLazy',
+  opts = {
+    preset = 'helix',
+    spec = {
+      { '<leader>a', group = 'AI (Claude Code)', icon = '🤖' },
+      { '<leader>b', group = 'Buffer' },
+      { '<leader>d', group = 'Debug', icon = '' },
+      { '<leader>e', group = 'Explore/Edit' },
+      { '<leader>f', group = 'Find', icon = '🔍' },
+      { '<leader>g', group = 'Git', icon = '' },
+      { '<leader>gc', group = 'Conflict' },
+      { '<leader>gf', group = 'Flow' },
+      { '<leader>gff', group = 'Feature' },
+      { '<leader>gfr', group = 'Release' },
+      { '<leader>gfh', group = 'Hotfix' },
+      { '<leader>gfb', group = 'Bugfix' },
+      { '<leader>l', group = 'Language', icon = '' },
+      { '<leader>n', group = 'Notes (Obsidian)', icon = '📝' },
+      { '<leader>o', group = 'Other' },
+      { '<leader>r', group = 'Replace', icon = '' },
+      { '<leader>s', group = 'Session' },
+      { '<leader>t', group = 'Terminal' },
+      { '<leader>v', group = 'Visits' },
+    },
+  },
+}

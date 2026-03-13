@@ -4,29 +4,6 @@
 --
 -- This file contains definitions of custom general and Leader mappings.
 
--- Leader group clues for mini.clue (will be replaced by which-key in Phase 4)
-_G.Config.leader_group_clues = {
-  { mode = 'n', keys = '<Leader>a', desc = '+AI (Claude Code)' },
-  { mode = 'x', keys = '<Leader>a', desc = '+AI (Claude Code)' },
-  { mode = 'n', keys = '<Leader>b', desc = '+Buffer' },
-  { mode = 'n', keys = '<Leader>d', desc = '+Debug' },
-  { mode = 'n', keys = '<Leader>e', desc = '+Explore/Edit' },
-  { mode = 'n', keys = '<Leader>f', desc = '+Find' },
-  { mode = 'n', keys = '<Leader>g', desc = '+Git' },
-  { mode = 'n', keys = '<Leader>gc', desc = '+Conflict' },
-  { mode = 'n', keys = '<Leader>gf', desc = '+Flow' },
-  { mode = 'n', keys = '<Leader>l', desc = '+Language' },
-  { mode = 'n', keys = '<Leader>n', desc = '+Notes (Obsidian)' },
-  { mode = 'n', keys = '<Leader>o', desc = '+Other' },
-  { mode = 'n', keys = '<Leader>r', desc = '+Replace' },
-  { mode = 'x', keys = '<Leader>r', desc = '+Replace' },
-  { mode = 'n', keys = '<Leader>s', desc = '+Session' },
-  { mode = 'n', keys = '<Leader>t', desc = '+Terminal' },
-  { mode = 'n', keys = '<Leader>v', desc = '+Visits' },
-  { mode = 'x', keys = '<Leader>g', desc = '+Git' },
-  { mode = 'x', keys = '<Leader>l', desc = '+Language' },
-}
-
 -- General mappings ===========================================================
 
 -- Use this section to add custom general mappings. See `:h vim.keymap.set()`.

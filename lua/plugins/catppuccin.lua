@@ -18,7 +18,7 @@ return {
         mini = { enabled = true, indentscope_color = 'mocha' },
         dap = true,
         noice = true,
-        -- which_key = true, -- Phase 4
+        which_key = true,
         snacks = true,
       },
     })
