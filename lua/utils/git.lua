@@ -83,16 +83,20 @@ function M.get_ahead_behind(repo_path)
 		return { ahead = M._status_cache.ahead, behind = M._status_cache.behind }
 	end
 
-	-- Get upstream tracking info
-	local out = vim.system(
-		{ "git", "-C", repo_path, "rev-list", "--left-right", "--count", "@{upstream}...HEAD" },
-		{ text = true, stderr = false }
-	):wait()
-	if out.code ~= 0 then
+	-- io.popen: bloqueo a nivel C, no bombea el event loop de Neovim.
+	-- vim.system():wait() usa vim.wait() internamente, que sí bombea el event loop
+	-- y causa re-entrada en el handler de LSP RPC ("response id must be a number").
+	local escaped = "'" .. repo_path:gsub("'", "'\\''") .. "'"
+	local handle = io.popen("git -C " .. escaped .. " rev-list --left-right --count @{upstream}...HEAD 2>/dev/null")
+	if not handle then
 		return { ahead = 0, behind = 0 }
 	end
+	local result = handle:read("*a")
+	handle:close()
 
-	local result = out.stdout
+	if not result or result == "" then
+		return { ahead = 0, behind = 0 }
+	end
 
 	local behind, ahead = result:match("(%d+)%s+(%d+)")
 	ahead = tonumber(ahead) or 0

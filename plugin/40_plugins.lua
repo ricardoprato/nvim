@@ -156,7 +156,7 @@ later(function()
 	-- - `:h conform-formatters`
 	require("conform").setup({
 		notify_on_error = false,
-		format_on_save = function(bufnr)
+		format_after_save = function(bufnr)
 			-- Don't auto-format if disabled
 			if vim.b[bufnr].disable_autoformat or vim.g.disable_autoformat then
 				return
@@ -279,7 +279,7 @@ now(function()
 			dap = true,
 		},
 	})
-	vim.cmd.colorscheme("catppuccin")
+	vim.cmd.colorscheme("catppuccin-nvim")
 end)
 
 -- Completion =================================================================
