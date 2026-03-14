@@ -1,66 +1,4 @@
 local M = {}
-local root = require("utils.root")
-
--- Get recent branches (sorted by last commit date) for repo of current buffer
-function M.get_recent_branches(repo_path)
-	repo_path = repo_path or root.git_root()
-	if not repo_path then
-		return {}
-	end
-
-	local out = vim.system(
-		{ "git", "-C", repo_path, "for-each-ref", "--sort=-committerdate", "refs/heads/", "--format=%(refname:short)" },
-		{ text = true }
-	):wait()
-	if out.code ~= 0 then
-		return {}
-	end
-
-	local result = out.stdout
-
-	local branches = {}
-	for branch in result:gmatch("[^\r\n]+") do
-		table.insert(branches, branch)
-	end
-
-	return branches
-end
-
--- Get current branch name for repo of current buffer
-function M.get_current_branch(repo_path)
-	repo_path = repo_path or root.git_root()
-	if not repo_path then
-		return nil
-	end
-
-	local out = vim.system({ "git", "-C", repo_path, "branch", "--show-current" }, { text = true }):wait()
-	if out.code ~= 0 then
-		return nil
-	end
-
-	local branch = vim.trim(out.stdout)
-
-	return branch ~= "" and branch or nil
-end
-
--- Switch to branch in repo of current buffer
-function M.switch_branch(branch, repo_path)
-	repo_path = repo_path or root.git_root()
-	if not repo_path then
-		vim.notify("Not in a git repository", vim.log.levels.WARN)
-		return
-	end
-
-	local current = M.get_current_branch(repo_path)
-	if current == branch then
-		vim.notify("Already on branch: " .. branch, vim.log.levels.INFO)
-		return
-	end
-
-	local repo_name = vim.fn.fnamemodify(repo_path, ":t")
-	vim.cmd("Git -C " .. vim.fn.fnameescape(repo_path) .. " checkout " .. branch)
-	vim.notify("[" .. repo_name .. "] Switched to branch: " .. branch, vim.log.levels.INFO)
-end
 
 -- Cache for ahead/behind status (updated on git events)
 M._status_cache = {
@@ -72,7 +10,7 @@ M._status_cache = {
 -- Get ahead/behind count from remote
 -- Returns { ahead = number, behind = number }
 function M.get_ahead_behind(repo_path)
-	repo_path = repo_path or root.git_root()
+	repo_path = repo_path or Snacks.git.get_root()
 	if not repo_path then
 		return { ahead = 0, behind = 0 }
 	end
@@ -135,7 +73,7 @@ end
 -- Background fetch to update remote tracking info
 -- Runs silently without blocking the UI
 function M.background_fetch(repo_path)
-	repo_path = repo_path or root.git_root()
+	repo_path = repo_path or Snacks.git.get_root()
 	if not repo_path then
 		return
 	end

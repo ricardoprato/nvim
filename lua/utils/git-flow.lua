@@ -1,5 +1,4 @@
 local M = {}
-local root = require("utils.root")
 
 -- Cache for git-flow commands (similar to mini.git)
 local _cache = {
@@ -89,7 +88,7 @@ local function exec(subcmd, args, opts)
 	end
 
 	-- Get repository root
-	local repo_path = root.git_root()
+	local repo_path = Snacks.git.get_root()
 	if not repo_path then
 		vim.notify("Not in a git repository", vim.log.levels.WARN)
 		return
@@ -106,7 +105,7 @@ end
 
 -- Check if git-flow is initialized in the current repo
 M.is_initialized = function(repo_path)
-	repo_path = repo_path or root.git_root()
+	repo_path = repo_path or Snacks.git.get_root()
 	if not repo_path then
 		return false
 	end
@@ -120,7 +119,7 @@ end
 
 -- Auto-init git-flow with defaults or interactively
 M.auto_init = function(repo_path)
-	repo_path = repo_path or root.git_root()
+	repo_path = repo_path or Snacks.git.get_root()
 	if not repo_path then
 		vim.notify("Not in a git repository", vim.log.levels.WARN)
 		return

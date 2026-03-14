@@ -85,30 +85,16 @@ return {
 		{
 			"<leader>ff",
 			function()
-				Snacks.picker.files({ cwd = require("utils.root").project_root() })
-			end,
-			desc = "Files (global)",
-		},
-		{
-			"<leader>fF",
-			function()
 				Snacks.picker.files()
 			end,
-			desc = "Files (local)",
+			desc = "Files",
 		},
 		{
 			"<leader>fg",
 			function()
-				Snacks.picker.grep({ cwd = require("utils.root").project_root() })
-			end,
-			desc = "Grep (global)",
-		},
-		{
-			"<leader>fG",
-			function()
 				Snacks.picker.grep()
 			end,
-			desc = "Grep (local)",
+			desc = "Grep",
 		},
 		{
 			"<leader>fb",
@@ -282,13 +268,20 @@ return {
 			mode = { "n", "x" },
 		},
 
-		-- Git branches
+		-- Git pickers
 		{
 			"<leader>gB",
 			function()
 				Snacks.picker.git_branches()
 			end,
 			desc = "Git branches",
+		},
+		{
+			"<leader>gS",
+			function()
+				Snacks.picker.git_status()
+			end,
+			desc = "Git status",
 		},
 
 		-- New features
