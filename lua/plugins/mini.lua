@@ -28,13 +28,6 @@ return {
 		{ "<leader>gb", "<Cmd>vertical Git blame -- %<CR>", desc = "Git blame" },
 		{ "<leader>g-", "<Cmd>Git checkout -<CR>", desc = "Git checkout -" },
 
-		-- Sessions (mini.sessions)
-		{ "<leader>sd", '<Cmd>lua MiniSessions.select("delete")<CR>', desc = "Delete" },
-		{ "<leader>sn", '<Cmd>lua MiniSessions.write(vim.fn.input("Session name: "))<CR>', desc = "New" },
-		{ "<leader>sp", '<Cmd>lua require("utils.project-session").save()<CR>', desc = "Save project session" },
-		{ "<leader>sr", '<Cmd>lua MiniSessions.select("read")<CR>', desc = "Read" },
-		{ "<leader>sw", "<Cmd>lua MiniSessions.write()<CR>", desc = "Write current" },
-
 		-- Visits (mini.visits)
 		{ "<leader>vv", '<Cmd>lua MiniVisits.add_label("core")<CR>', desc = 'Add "core" label' },
 		{ "<leader>vV", '<Cmd>lua MiniVisits.remove_label("core")<CR>', desc = 'Remove "core" label' },
@@ -70,31 +63,6 @@ return {
 		MiniMisc.setup_auto_root()
 		MiniMisc.setup_restore_cursor()
 		MiniMisc.setup_termbg_sync()
-
-		require("mini.sessions").setup({
-			directory = vim.fn.stdpath("data") .. "/sessions",
-			autowrite = true,
-			hooks = {
-				pre = {
-					write = function()
-						for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-							local bt = vim.bo[buf].buftype
-							if bt == "terminal" or bt == "nofile" then
-								pcall(vim.api.nvim_buf_delete, buf, { force = true })
-							end
-						end
-					end,
-				},
-			},
-		})
-
-		vim.api.nvim_create_autocmd("VimLeavePre", {
-			callback = function()
-				if vim.v.this_session ~= "" then
-					pcall(MiniSessions.write)
-				end
-			end,
-		})
 
 		-- Step 2: deferred modules =============================================
 
