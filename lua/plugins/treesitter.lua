@@ -28,6 +28,7 @@ return {
 				"diff",
 				"query",
 				"http",
+				"regex",
 			}
 
 			-- Install missing parsers (async, but runs early thanks to lazy=false)
