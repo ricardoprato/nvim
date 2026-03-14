@@ -39,12 +39,27 @@ return {
 				require("nvim-treesitter").install(missing)
 			end
 
-			-- Enable highlighting via FileType — registered before any buffer needs it
+			-- Enable highlighting and auto-install missing parsers on FileType
+			local installing = {}
 			vim.api.nvim_create_autocmd("FileType", {
 				callback = function(ev)
-					pcall(vim.treesitter.start, ev.buf)
+					local lang = vim.treesitter.language.get_lang(ev.match) or ev.match
+					if pcall(vim.treesitter.start, ev.buf) then
+						return
+					end
+					-- Parser not installed — install on-demand (once per lang per session)
+					if installing[lang] then
+						return
+					end
+					local available = require("nvim-treesitter").get_available()
+					if not vim.list_contains(available, lang) then
+						return
+					end
+					installing[lang] = true
+					vim.notify("Installing treesitter parser: " .. lang, vim.log.levels.INFO)
+					require("nvim-treesitter").install(lang)
 				end,
-				desc = "Start tree-sitter highlighting",
+				desc = "Start tree-sitter highlighting (auto-install missing parsers)",
 			})
 		end,
 	},
