@@ -25,7 +25,6 @@ return {
 		{ "<leader>gs", "<Cmd>lua MiniGit.show_at_cursor()<CR>", mode = "x", desc = "Show at selection" },
 		{ "<leader>gP", "<Cmd>Git push<CR>", desc = "Git push" },
 		{ "<leader>gp", "<Cmd>Git pull --rebase<CR>", desc = "Git pull" },
-		{ "<leader>gb", "<Cmd>vertical Git blame -- %<CR>", desc = "Git blame" },
 		{ "<leader>g-", "<Cmd>Git checkout -<CR>", desc = "Git checkout -" },
 
 		-- Visits (mini.visits)
@@ -124,23 +123,6 @@ return {
 					git.start_auto_fetch(1)
 				end
 			end, "Start background git fetch")
-
-			local align_blame = function(au_data)
-				if not au_data.data or au_data.data.git_subcommand ~= "blame" then
-					return
-				end
-				local win_src = au_data.data.win_source
-				if not win_src or not vim.api.nvim_win_is_valid(win_src) then
-					return
-				end
-				local win_git = vim.api.nvim_get_current_win()
-				vim.wo[win_git].wrap = false
-				vim.fn.winrestview({ topline = vim.fn.line("w0", win_src) })
-				vim.api.nvim_win_set_cursor(win_git, { vim.fn.line(".", win_src), 0 })
-				vim.wo[win_src].scrollbind = true
-				vim.wo[win_git].scrollbind = true
-			end
-			_G.Config.new_autocmd("User", "MiniGitCommandSplit", align_blame, "Align blame output")
 
 			-- Hipatterns
 			local hipatterns = require("mini.hipatterns")

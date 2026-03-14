@@ -268,7 +268,14 @@ return {
 			mode = { "n", "x" },
 		},
 
-		-- Git pickers
+		-- Git
+		{
+			"<leader>gb",
+			function()
+				Snacks.git.blame_line()
+			end,
+			desc = "Git blame line",
+		},
 		{
 			"<leader>gB",
 			function()
