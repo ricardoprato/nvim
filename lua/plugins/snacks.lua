@@ -72,16 +72,14 @@ return {
 		styles = {},
 	},
 	keys = {
-		-- Dashboard
-		{
-			"<leader>eo",
-			function()
-				Snacks.dashboard()
-			end,
-			desc = "Dashboard",
-		},
-
 		-- Picker (replacing mini.pick mappings)
+		{
+			"<leader><space>",
+			function()
+				Snacks.picker.smart()
+			end,
+			desc = "Smart Find Files",
+		},
 		{
 			"<leader>ff",
 			function()
@@ -208,7 +206,13 @@ return {
 			end,
 			desc = "Recent files",
 		},
-
+		{
+			"<leader>fp",
+			function()
+				Snacks.picker.projects()
+			end,
+			desc = "Projects",
+		},
 		-- Explorer (replacing mini.files)
 		{
 			"<leader>ed",
@@ -249,6 +253,13 @@ return {
 			end,
 			desc = "Delete others",
 		},
+		{
+			"<leader>be",
+			function()
+				Snacks.bufdelete.delete()
+			end,
+			desc = "Delete all",
+		},
 
 		-- Words navigation
 		{
@@ -284,13 +295,41 @@ return {
 			desc = "Git branches",
 		},
 		{
-			"<leader>gS",
+			"<leader>gs",
 			function()
 				Snacks.picker.git_status()
 			end,
 			desc = "Git status",
 		},
-
+		{
+			"<leader>go",
+			function()
+				Snacks.gitbrowse()
+			end,
+			desc = "Git browse (file)",
+			mode = { "n", "x" },
+		},
+		{
+			"<leader>gO",
+			function()
+				Snacks.gitbrowse({ what = "repo" })
+			end,
+			desc = "Git browse (repo)",
+		},
+		{
+			"<leader>gS",
+			function()
+				Snacks.picker.git_stash()
+			end,
+			desc = "Git Stash",
+		},
+		{
+			"<leader>gd",
+			function()
+				Snacks.picker.git_diff()
+			end,
+			desc = "Git Diff (Hunks)",
+		},
 		-- New features
 		{
 			"<leader>tg",
@@ -320,6 +359,20 @@ return {
 			end,
 			desc = "Rename file",
 		},
+		{
+			"<leader>z",
+			function()
+				Snacks.zen()
+			end,
+			desc = "Toggle Zen Mode",
+		},
+		{
+			"<leader>Z",
+			function()
+				Snacks.zen.zoom()
+			end,
+			desc = "Toggle Zoom",
+		},
 	},
 	init = function()
 		vim.api.nvim_create_autocmd("User", {
@@ -332,8 +385,10 @@ return {
 				Snacks.toggle.diagnostics():map("\\d")
 				Snacks.toggle.inlay_hints():map("\\h")
 				Snacks.toggle.dim():map("<leader>od")
-				Snacks.toggle.zen():map("<leader>oz")
-				Snacks.toggle.scroll():map("<leader>om")
+				Snacks.toggle
+					.option("background", { off = "light", on = "dark", name = "Dark Background" })
+					:map("<leader>ob")
+				Snacks.toggle.dim():map("<leader>uD")
 			end,
 		})
 	end,

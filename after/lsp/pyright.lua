@@ -1,4 +1,4 @@
 return {
-  filetypes = { 'python' },
-  root_markers = { 'pyrightconfig.json' },
+	filetypes = { "python" },
+	root_markers = { "pyrightconfig.json" },
 }

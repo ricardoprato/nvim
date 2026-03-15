@@ -4,25 +4,9 @@ return {
 	priority = 900,
 	keys = {
 		-- Git (mini.git + mini.diff)
-		{ "<leader>ga", "<Cmd>Git diff --cached<CR>", desc = "Added diff" },
-		{ "<leader>gA", "<Cmd>Git diff --cached -- %<CR>", desc = "Added diff buffer" },
 		{ "<leader>gc", "<Cmd>Git commit<CR>", desc = "Commit" },
 		{ "<leader>gC", "<Cmd>Git commit --amend<CR>", desc = "Commit amend" },
-		{ "<leader>gd", "<Cmd>Git diff<CR>", desc = "Diff" },
-		{ "<leader>gD", "<Cmd>Git diff -- %<CR>", desc = "Diff buffer" },
-		{
-			"<leader>gl",
-			"<Cmd>Git log --pretty=format:\\%h\\ \\%as\\ │\\ \\%s --topo-order<CR>",
-			desc = "Log",
-		},
-		{
-			"<leader>gL",
-			"<Cmd>Git log --pretty=format:\\%h\\ \\%as\\ │\\ \\%s --topo-order --follow -- %<CR>",
-			desc = "Log buffer",
-		},
-		{ "<leader>go", "<Cmd>lua MiniDiff.toggle_overlay()<CR>", desc = "Toggle overlay" },
-		{ "<leader>gs", "<Cmd>lua MiniGit.show_at_cursor()<CR>", desc = "Show at cursor" },
-		{ "<leader>gs", "<Cmd>lua MiniGit.show_at_cursor()<CR>", mode = "x", desc = "Show at selection" },
+		{ "<leader>og", "<Cmd>lua MiniDiff.toggle_overlay()<CR>", desc = "Toggle overlay" },
 		{ "<leader>gP", "<Cmd>Git push<CR>", desc = "Git push" },
 		{ "<leader>gp", "<Cmd>Git pull --rebase<CR>", desc = "Git pull" },
 		{ "<leader>g-", "<Cmd>Git checkout -<CR>", desc = "Git checkout -" },

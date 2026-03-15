@@ -1,16 +1,16 @@
-local ok, schemastore = pcall(require, 'schemastore')
+local ok, schemastore = pcall(require, "schemastore")
 
 return {
-  settings = {
-    yaml = {
-      schemaStore = {
-        -- You must disable built-in schemaStore support if you want to use
-        -- this plugin and its advanced options like `ignore`.
-        enable = false,
-        -- Avoid TypeError: Cannot read properties of undefined (reading 'length')
-        url = '',
-      },
-      schemas = ok and schemastore.yaml.schemas() or {},
-    },
-  },
+	settings = {
+		yaml = {
+			schemaStore = {
+				-- You must disable built-in schemaStore support if you want to use
+				-- this plugin and its advanced options like `ignore`.
+				enable = false,
+				-- Avoid TypeError: Cannot read properties of undefined (reading 'length')
+				url = "",
+			},
+			schemas = ok and schemastore.yaml.schemas() or {},
+		},
+	},
 }
