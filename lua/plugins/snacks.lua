@@ -256,7 +256,7 @@ return {
 		{
 			"<leader>be",
 			function()
-				Snacks.bufdelete.delete()
+				Snacks.bufdelete.delete({ force = true })
 			end,
 			desc = "Delete all",
 		},
