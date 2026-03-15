@@ -148,14 +148,14 @@ return {
 			function()
 				Snacks.picker.lsp_symbols()
 			end,
-			desc = "Symbols workspace",
+			desc = "LSP Symbols",
 		},
 		{
 			"<leader>fS",
 			function()
-				Snacks.picker.lsp_symbols({ filter = { kind = "Function" } })
+				Snacks.picker.lsp_workspace_symbols()
 			end,
-			desc = "Symbols document",
+			desc = "LSP Workspace Symbols",
 		},
 		{
 			"<leader>fR",
