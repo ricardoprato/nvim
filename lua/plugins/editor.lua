@@ -37,8 +37,18 @@ return {
 		"sindrets/diffview.nvim",
 		cmd = { "DiffviewOpen", "DiffviewClose" },
 		keys = {
-			{ "<leader>gv", "<Cmd>DiffviewOpen<CR>", desc = "Diffview open" },
-			{ "<leader>gV", "<Cmd>DiffviewClose<CR>", desc = "Diffview close" },
+			{
+				"<leader>gv",
+				function()
+					local lib = require("diffview.lib")
+					if lib.get_current_view() then
+						vim.cmd("DiffviewClose")
+					else
+						vim.cmd("DiffviewOpen")
+					end
+				end,
+				desc = "Diffview toggle",
+			},
 		},
 		opts = { use_icons = true },
 	},
@@ -72,7 +82,9 @@ return {
 				desc = "Replace selection",
 			},
 		},
-		opts = {},
+		opts = {
+			transient = true,
+		},
 	},
 
 	-- vim-sleuth (auto detect indent)

@@ -56,7 +56,6 @@ end
 
 nmap_leader("ba", "<Cmd>b#<CR>", "Alternate")
 nmap_leader("bs", new_scratch_buffer, "Scratch")
-nmap_leader("bo", "<Cmd>%bd|e#<CR>", "Delete all!")
 
 -- e is for 'Explore' and 'Edit'
 -- NOTE: <Leader>ed, ef, en, eo are now in snacks.lua
