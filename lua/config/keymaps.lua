@@ -107,13 +107,6 @@ nmap_leader("gfbp", "<Cmd>GitFlow bugfix publish<CR>", "Bugfix: Publish")
 nmap_leader("gfbd", "<Cmd>GitFlow bugfix delete<CR>", "Bugfix: Delete")
 nmap_leader("gfbl", "<Cmd>GitFlow bugfix list<CR>", "Bugfix: List")
 
--- Git Conflict resolution
-nmap("]x", '<Cmd>lua require("utils.git-conflict").next_conflict()<CR>', "Next conflict")
-nmap("[x", '<Cmd>lua require("utils.git-conflict").prev_conflict()<CR>', "Prev conflict")
-nmap_leader("gco", '<Cmd>lua require("utils.git-conflict").choose_ours()<CR>', "Conflict: Ours")
-nmap_leader("gct", '<Cmd>lua require("utils.git-conflict").choose_theirs()<CR>', "Conflict: Theirs")
-nmap_leader("gcb", '<Cmd>lua require("utils.git-conflict").choose_both()<CR>', "Conflict: Both")
-nmap_leader("gcl", '<Cmd>lua require("utils.git-conflict").list_conflicts()<CR>', "Conflict: List all")
 
 -- t is for 'Terminal'
 nmap_leader("tT", "<Cmd>horizontal term<CR>", "Terminal (horizontal)")

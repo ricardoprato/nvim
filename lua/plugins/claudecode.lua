@@ -30,5 +30,28 @@ return {
 		{ "<leader>aa", "<cmd>ClaudeCodeDiffAccept<cr>", desc = "Accept diff" },
 		{ "<leader>ad", "<cmd>ClaudeCodeDiffDeny<cr>", desc = "Deny diff" },
 	},
-	opts = {},
+	opts = {
+		terminal = {
+			snacks_win_opts = {
+				position = "float",
+				width = 0.95,
+				height = 0.95,
+				border = "rounded",
+				keys = {
+					claude_hide = {
+						"<C-,>",
+						function(self)
+							self:hide()
+						end,
+						mode = "t",
+						desc = "Hide Claude",
+					},
+				},
+			},
+		},
+		diff_opts = {
+			open_in_new_tab = true,
+			hide_terminal_in_new_tab = true,
+		},
+	},
 }

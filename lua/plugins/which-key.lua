@@ -11,7 +11,6 @@ return {
 			{ "<leader>e", group = "Explore/Edit", icon = " " },
 			{ "<leader>f", group = "Find" },
 			{ "<leader>g", group = "Git" },
-			{ "<leader>gc", group = "Conflict", icon = "󰘬 " },
 			{ "<leader>gf", group = "Flow", icon = " " },
 			{ "<leader>gff", group = "Feature", icon = " " },
 			{ "<leader>gfr", group = "Release", icon = " " },
