@@ -1,4 +1,86 @@
-return {
+-- Cold-start detection (D-04): true iff fresh nvim with no real project buffers loaded.
+-- Excludes [No Name], dashboard scratch, and unlisted helper buffers via the
+-- named-and-listed filter — argc()==0 alone is not robust because nvim seeds
+-- a [No Name] buffer at startup.
+local function is_cold_start()
+	if vim.fn.argc() ~= 0 then
+		return false
+	end
+	for _, b in ipairs(vim.api.nvim_list_bufs()) do
+		if
+			vim.api.nvim_buf_is_loaded(b)
+			and vim.bo[b].buftype == ""
+			and vim.api.nvim_buf_get_name(b) ~= ""
+			and vim.fn.buflisted(b) == 1
+		then
+			return false
+		end
+	end
+	return true
+end
+
+-- D-02 atomic project-swap orchestrator. Wired as the `confirm` action of
+-- `Snacks.picker.projects` so picking a project triggers:
+--   1. Snapshot Project A's session (PersistenceSavePre at persistence.lua:14-25
+--      already filters terminal/nofile so they don't land in the snapshot).
+--   2. Silent `:wa` to flush modified writable buffers (D-01).
+--   3. Close all `buftype==""` buffers; skip terminal/nofile so the floating
+--      Claude Code chat survives the swap.
+--   4. `vim.fn.chdir(target)` — global chdir; doesn't fire DirChanged so
+--      MiniMisc auto-root won't fight the chdir until next BufEnter.
+--   5. `persistence.load()` — sources B's session for the current branch
+--      (cwd+branch keying via `branch = true` set in Plan 02-02).
+-- Save failure aborts the swap (no partial state). Same-session re-pick is a no-op.
+local function project_swap_confirm(picker, item)
+	if not item or not item.file then
+		return
+	end
+	picker:close()
+
+	local target = item.file
+	if vim.fn.isdirectory(target) ~= 1 then
+		return
+	end
+
+	-- Same-session no-op (avoid round-trip when re-picking current project)
+	if vim.v.this_session ~= "" and vim.fn.getcwd() == target then
+		return
+	end
+
+	if not is_cold_start() then
+		local persistence = require("persistence")
+
+		local save_ok = pcall(persistence.save)
+		if not save_ok then
+			vim.notify("project swap aborted: persistence.save() failed", vim.log.levels.ERROR)
+			return
+		end
+
+		pcall(vim.cmd, "silent! wa")
+
+		for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+			if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].buftype == "" then
+				pcall(vim.api.nvim_buf_delete, buf, { force = false })
+			end
+		end
+	end
+
+	vim.fn.chdir(target)
+	pcall(require("persistence").load)
+end
+
+-- Builder for the project picker opts table. Used by both <leader>fp and
+-- <leader>sp keymaps so changes here apply uniformly.
+local function project_picker_opts()
+	return {
+		dev = { "~/odoo/17.0", "~/odoo/18.0", "~/odoo/19.0", "~/dev" },
+		patterns = { ".odoo_lsp", "__manifest__.py", ".git", "package.json", "pyproject.toml" },
+		recent = true,
+		confirm = project_swap_confirm,
+	}
+end
+
+local spec = {
 	"folke/snacks.nvim",
 	priority = 1000,
 	lazy = false,
@@ -393,3 +475,5 @@ return {
 		})
 	end,
 }
+
+return spec
