@@ -111,8 +111,8 @@ local function declared_groups()
 
 	local ok, wk_config = pcall(require, "which-key.config")
 	if ok and wk_config then
-		local spec = wk_config.spec
-			or (wk_config.options and wk_config.options.spec)
+		local spec = (wk_config.options and wk_config.options.spec)
+			or wk_config.spec
 			or (wk_config.defaults and wk_config.defaults.spec)
 		if spec then
 			walk_spec(spec, out)
