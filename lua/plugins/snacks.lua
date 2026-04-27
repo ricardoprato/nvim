@@ -291,9 +291,16 @@ local spec = {
 		{
 			"<leader>fp",
 			function()
-				Snacks.picker.projects()
+				Snacks.picker.projects(project_picker_opts())
 			end,
 			desc = "Projects",
+		},
+		{
+			"<leader>sp",
+			function()
+				Snacks.picker.projects(project_picker_opts())
+			end,
+			desc = "Projects (swap session)",
 		},
 		-- Explorer (replacing mini.files)
 		{
