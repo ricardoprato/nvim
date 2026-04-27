@@ -44,7 +44,7 @@ local function _refresh_async(repo_path)
 			-- setup_refresh_triggers and by the legacy invalidate handler.
 			pcall(vim.api.nvim_exec_autocmds, "User", {
 				pattern = "MiniGitUpdated",
-				data = { source = "async-refresh" },
+				data = { source = "async-refresh", buf = vim.api.nvim_get_current_buf() },
 			})
 		end)
 	)
