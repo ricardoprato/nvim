@@ -25,5 +25,29 @@ return {
 				end
 			end,
 		})
+
+		-- Re-fire FileType per restored buffer so LSP (after/lsp/*.lua via vim.lsp.start),
+		-- treesitter, and ftplugin all wake without a manual :e (NAV-04). Self-assignment
+		-- is the canonical pattern — more reliable than `doautocmd FileType` across
+		-- NV 0.10..0.13 because it forces a fresh FileType emission even when the
+		-- buffer already had the same filetype set during session sourcing.
+		vim.api.nvim_create_autocmd("User", {
+			pattern = "PersistenceLoadPost",
+			callback = function()
+				for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+					if
+						vim.api.nvim_buf_is_loaded(buf)
+						and vim.bo[buf].buftype == ""
+						and vim.fn.buflisted(buf) == 1
+					then
+						local ft = vim.bo[buf].filetype
+						if ft ~= "" then
+							vim.bo[buf].filetype = ft
+						end
+					end
+				end
+			end,
+			desc = "Re-fire FileType per restored buffer (NAV-04)",
+		})
 	end,
 }
