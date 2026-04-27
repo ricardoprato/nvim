@@ -149,3 +149,26 @@ end, {
 	end,
 	desc = "Execute git-flow commands",
 })
+
+-- :KeymapAudit command
+--   :KeymapAudit         → readonly markdown scratch buffer with findings
+--   :KeymapAudit write   → also writes to .planning/phases/01-foundation/KEYMAP-BASELINE.md
+local KEYMAP_AUDIT_BASELINE = vim.fn.stdpath("config") .. "/.planning/phases/01-foundation/KEYMAP-BASELINE.md"
+vim.api.nvim_create_user_command("KeymapAudit", function(opts)
+	local arg = vim.trim(opts.args or "")
+	if arg == "" then
+		require("utils.keymap-audit").run(nil)
+	elseif arg == "write" then
+		require("utils.keymap-audit").run(KEYMAP_AUDIT_BASELINE)
+	else
+		vim.notify("Usage: :KeymapAudit | :KeymapAudit write", vim.log.levels.WARN)
+	end
+end, {
+	nargs = "?",
+	complete = function(arg_lead)
+		return vim.tbl_filter(function(s)
+			return vim.startswith(s, arg_lead)
+		end, { "write" })
+	end,
+	desc = "Audit keymaps for collisions, undeclared groups, and dead targets",
+})
