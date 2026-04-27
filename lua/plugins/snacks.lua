@@ -104,6 +104,11 @@ local spec = {
 						desc = "Recent Files",
 						action = ":lua Snacks.dashboard.pick('oldfiles')",
 					},
+					-- NOTE: dashboard projects entry uses default Snacks opts (no custom confirm),
+					-- so picking from the dashboard does NOT trigger the D-02 orchestrator.
+					-- This is for cold-start discoverability; in-session swaps go through
+					-- <leader>fp / <leader>sp which carry the orchestrator.
+					{ icon = " ", key = "p", desc = "Projects", action = ":lua Snacks.picker.projects()" },
 					{
 						icon = " ",
 						key = "c",
