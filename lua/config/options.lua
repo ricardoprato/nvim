@@ -26,6 +26,7 @@ vim.o.undofile    = true                             -- Enable persistent undo
 vim.o.undolevels  = 500                              -- Limit undo levels (default 1000)
 
 vim.o.shada       = "'50,<30,s5,:500,/50,@50,h"      -- Limit ShaDa file (for startup)
+vim.o.sessionoptions = 'blank,buffers,curdir,folds,help,tabpages,winsize'  -- Drop 'terminal' (NAV-03); 'options' already absent in NV 0.13 default
 
 -- Enable all filetype plugins and syntax (if not enabled, for better startup)
 vim.cmd('filetype plugin indent on')
