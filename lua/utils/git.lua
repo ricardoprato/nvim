@@ -1,51 +1,60 @@
 local M = {}
 
--- Cache for ahead/behind status (updated on git events)
-M._status_cache = {
-	ahead = 0,
-	behind = 0,
-	last_update = 0,
-}
+-- Async ahead/behind refresh:
+--   * `get_ahead_behind` is a pure read of `_status_cache`. It never blocks and
+--     never spawns processes. Statusline render path stays sync.
+--   * `_refresh_async` spawns `git rev-list --left-right --count @{upstream}...HEAD`
+--     via `vim.system` callback form (not :wait — that pumps the event loop and
+--     re-enters the LSP RPC handler with "response id must be a number").
+--   * `setup_refresh_triggers` wires `User MiniGitUpdated` and `FocusGained` to
+--     `_refresh_async`. The async callback re-emits `User MiniGitUpdated` with
+--     `data.source = "async-refresh"` so `format_summary` re-renders without
+--     looping back into another refresh.
+--   * `_in_flight` coalesces concurrent triggers. Cache stays at the last-known
+--     value on timeout / non-zero exit.
+M._status_cache = { ahead = 0, behind = 0 }
+M._in_flight = false
 
--- Get ahead/behind count from remote
--- Returns { ahead = number, behind = number }
-function M.get_ahead_behind(repo_path)
-	repo_path = repo_path or Snacks.git.get_root()
+local function _refresh_async(repo_path)
+	repo_path = repo_path or (Snacks and Snacks.git and Snacks.git.get_root())
 	if not repo_path then
-		return { ahead = 0, behind = 0 }
+		return
 	end
-
-	-- Use cached value if recent (within 3 seconds)
-	local now = vim.uv.now()
-	if now - M._status_cache.last_update < 3000 then
-		return { ahead = M._status_cache.ahead, behind = M._status_cache.behind }
+	if M._in_flight then
+		return
 	end
+	M._in_flight = true
 
-	-- io.popen: bloqueo a nivel C, no bombea el event loop de Neovim.
-	-- vim.system():wait() usa vim.wait() internamente, que sí bombea el event loop
-	-- y causa re-entrada en el handler de LSP RPC ("response id must be a number").
-	local escaped = "'" .. repo_path:gsub("'", "'\\''") .. "'"
-	local handle = io.popen("git -C " .. escaped .. " rev-list --left-right --count @{upstream}...HEAD 2>/dev/null")
-	if not handle then
-		return { ahead = 0, behind = 0 }
-	end
-	local result = handle:read("*a")
-	handle:close()
+	vim.system(
+		{ "git", "-C", repo_path, "rev-list", "--left-right", "--count", "@{upstream}...HEAD" },
+		{ text = true, timeout = 2000 },
+		vim.schedule_wrap(function(result)
+			M._in_flight = false
+			if result and result.code == 0 and result.stdout and result.stdout ~= "" then
+				local behind, ahead = result.stdout:match("(%d+)%s+(%d+)")
+				ahead = tonumber(ahead)
+				behind = tonumber(behind)
+				if ahead and behind then
+					M._status_cache.ahead = ahead
+					M._status_cache.behind = behind
+				end
+			end
+			-- Re-emit so format_summary reruns with fresh cache. The
+			-- `source = async-refresh` flag is the loop guard read by
+			-- setup_refresh_triggers and by the legacy invalidate handler.
+			pcall(vim.api.nvim_exec_autocmds, "User", {
+				pattern = "MiniGitUpdated",
+				data = { source = "async-refresh" },
+			})
+		end)
+	)
+end
 
-	if not result or result == "" then
-		return { ahead = 0, behind = 0 }
-	end
+M._refresh_async = _refresh_async
 
-	local behind, ahead = result:match("(%d+)%s+(%d+)")
-	ahead = tonumber(ahead) or 0
-	behind = tonumber(behind) or 0
-
-	-- Update cache
-	M._status_cache.ahead = ahead
-	M._status_cache.behind = behind
-	M._status_cache.last_update = now
-
-	return { ahead = ahead, behind = behind }
+-- Sync read of the ahead/behind cache. Never blocks, never spawns.
+function M.get_ahead_behind(_repo_path)
+	return { ahead = M._status_cache.ahead, behind = M._status_cache.behind }
 end
 
 -- Count conflict markers in current buffer
@@ -65,27 +74,25 @@ function M.count_conflicts(bufnr)
 	return count
 end
 
--- Invalidate cache (call on git operations)
+-- Legacy entry point. The TTL it used to invalidate is gone; force a refresh
+-- instead so callers get the freshest value on the next render.
 function M.invalidate_cache()
-	M._status_cache.last_update = 0
+	_refresh_async()
 end
 
--- Background fetch to update remote tracking info
--- Runs silently without blocking the UI
+-- Background fetch to update remote tracking info. After a successful fetch
+-- the ahead/behind cache no longer reflects reality, so kick a refresh.
+-- The refresh's MiniGitUpdated re-emit drives the statusline redraw.
 function M.background_fetch(repo_path)
-	repo_path = repo_path or Snacks.git.get_root()
+	repo_path = repo_path or (Snacks and Snacks.git and Snacks.git.get_root())
 	if not repo_path then
 		return
 	end
 
-	-- Use vim.system for async execution (non-blocking)
 	vim.system({ "git", "-C", repo_path, "fetch", "--quiet" }, { text = true }, function(result)
 		if result.code == 0 then
-			-- Invalidate cache after successful fetch
-			M.invalidate_cache()
-			-- Schedule statusline redraw on main thread
 			vim.schedule(function()
-				vim.cmd("redrawstatus")
+				_refresh_async(repo_path)
 			end)
 		end
 	end)
@@ -123,6 +130,23 @@ function M.stop_auto_fetch()
 		M._fetch_timer:close()
 		M._fetch_timer = nil
 	end
+end
+
+-- Wire MiniGitUpdated and FocusGained to async refresh. Idempotent — the
+-- `custom-config` augroup is shared with the rest of the config; duplicate
+-- registration would simply install a second autocmd. Callers are expected
+-- to call this once (from lua/plugins/mini.lua).
+function M.setup_refresh_triggers()
+	_G.Config.new_autocmd("User", "MiniGitUpdated", function(args)
+		if args and args.data and args.data.source == "async-refresh" then
+			return
+		end
+		_refresh_async()
+	end, "Async refresh ahead/behind on git event")
+
+	_G.Config.new_autocmd("FocusGained", "*", function()
+		_refresh_async()
+	end, "Async refresh ahead/behind on focus regained")
 end
 
 return M
