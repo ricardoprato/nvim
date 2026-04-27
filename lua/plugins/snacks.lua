@@ -21,11 +21,16 @@ end
 
 -- D-02 atomic project-swap orchestrator. Wired as the `confirm` action of
 -- `Snacks.picker.projects` so picking a project triggers:
---   1. Snapshot Project A's session (PersistenceSavePre at persistence.lua:14-25
---      already filters terminal/nofile so they don't land in the snapshot).
+--   1. Snapshot Project A's session (PersistenceSavePre at persistence.lua
+--      cleans non-claudecode terminal/nofile so they don't land in the
+--      snapshot; the claudecode float is preserved by the is_claude guard
+--      added in Plan 02-04 — see CR-01).
 --   2. Silent `:wa` to flush modified writable buffers (D-01).
 --   3. Close all `buftype==""` buffers; skip terminal/nofile so the floating
---      Claude Code chat survives the swap.
+--      Claude Code chat survives the swap (survival enforced two-deep:
+--      the close-loop here filters by buftype, AND the upstream
+--      PersistenceSavePre filter in lua/plugins/persistence.lua preserves
+--      the claudecode buffer through persistence.save() — see CR-01).
 --   4. `vim.fn.chdir(target)` — global chdir; doesn't fire DirChanged so
 --      MiniMisc auto-root won't fight the chdir until next BufEnter.
 --   5. `persistence.load()` — sources B's session for the current branch
