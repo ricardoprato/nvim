@@ -98,9 +98,7 @@ return {
 			end
 
 			_G.Config.new_autocmd("User", "MiniGitUpdated", format_summary, "Format git summary")
-			_G.Config.new_autocmd("User", "MiniGitUpdated", function()
-				require("utils.git").invalidate_cache()
-			end, "Invalidate git status cache")
+			require("utils.git").setup_refresh_triggers()
 			_G.Config.new_autocmd("User", "MiniGitUpdated", function()
 				local git = require("utils.git")
 				if not git._fetch_timer then
