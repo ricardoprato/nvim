@@ -13,17 +13,29 @@ return {
 	config = function(_, opts)
 		require("persistence").setup(opts)
 
-		-- Clean terminal and nofile buffers before saving (migrated from mini.sessions hook)
+		-- Clean terminal and nofile buffers before saving (migrated from mini.sessions hook).
+		-- EXCEPTION: preserve claudecode.nvim float buffers — they are rendered as Snacks
+		-- terminal floats (`buftype == "terminal"`, `filetype == "snacks_terminal"`) but the
+		-- locked PROJECT.md constraint requires claudecode.nvim to survive every session
+		-- save (project swap via <leader>sp, VimLeavePre, etc.). Closes CR-01 from 02-VERIFICATION.md.
 		vim.api.nvim_create_autocmd("User", {
 			pattern = "PersistenceSavePre",
 			callback = function()
 				for _, buf in ipairs(vim.api.nvim_list_bufs()) do
 					local bt = vim.bo[buf].buftype
 					if bt == "terminal" or bt == "nofile" then
-						pcall(vim.api.nvim_buf_delete, buf, { force = true })
+						local name = vim.api.nvim_buf_get_name(buf)
+						local ft = vim.bo[buf].filetype
+						local is_claude = name:match("ClaudeCode") ~= nil
+							or name:match("claudecode") ~= nil
+							or (ft == "snacks_terminal" and name:match("claude") ~= nil)
+						if not is_claude then
+							pcall(vim.api.nvim_buf_delete, buf, { force = true })
+						end
 					end
 				end
 			end,
+			desc = "Clean terminal/nofile buffers before save; preserve claudecode (CR-01)",
 		})
 
 		-- Re-fire FileType per restored buffer so LSP (after/lsp/*.lua via vim.lsp.start),
