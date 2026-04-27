@@ -43,7 +43,7 @@ return {
 		end)
 
 		require("mini.misc").setup()
-		MiniMisc.setup_auto_root()
+		MiniMisc.setup_auto_root({ ".odoo_lsp", "__manifest__.py", ".git", "package.json", "pyproject.toml" })
 		MiniMisc.setup_restore_cursor()
 		MiniMisc.setup_termbg_sync()
 
