@@ -1,6 +1,9 @@
 return {
 	"folke/persistence.nvim",
 	event = "BufReadPre",
+	opts = {
+		branch = true, -- NAV-05: per-branch session keying. Same as upstream default but locked here so the contract is checked into code.
+	},
 	keys = {
 		{ "<leader>ss", function() require("persistence").select() end, desc = "Select session" },
 		{ "<leader>sr", function() require("persistence").load() end, desc = "Restore (cwd)" },
