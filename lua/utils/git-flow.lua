@@ -87,8 +87,8 @@ local function exec(subcmd, args, opts)
 		return
 	end
 
-	-- Get repository root
-	local repo_path = Snacks.git.get_root()
+	-- Get repository root via 3-layer fallback (Phase 3 D-16)
+	local repo_path = require("utils.git").repo_root()
 	if not repo_path then
 		vim.notify("Not in a git repository", vim.log.levels.WARN)
 		return
@@ -105,7 +105,7 @@ end
 
 -- Check if git-flow is initialized in the current repo
 M.is_initialized = function(repo_path)
-	repo_path = repo_path or Snacks.git.get_root()
+	repo_path = require("utils.git").repo_root(repo_path)
 	if not repo_path then
 		return false
 	end
@@ -119,7 +119,7 @@ end
 
 -- Auto-init git-flow with defaults or interactively
 M.auto_init = function(repo_path)
-	repo_path = repo_path or Snacks.git.get_root()
+	repo_path = require("utils.git").repo_root(repo_path)
 	if not repo_path then
 		vim.notify("Not in a git repository", vim.log.levels.WARN)
 		return
