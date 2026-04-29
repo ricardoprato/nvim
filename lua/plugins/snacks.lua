@@ -520,7 +520,6 @@ local spec = {
 				Snacks.toggle
 					.option("background", { off = "light", on = "dark", name = "Dark Background" })
 					:map("<leader>ob")
-				Snacks.toggle.dim():map("<leader>uD")
 			end,
 		})
 	end,
