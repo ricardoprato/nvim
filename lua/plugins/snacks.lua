@@ -224,16 +224,16 @@ local spec = {
 		{
 			"<leader>fc",
 			function()
-				Snacks.picker.git_log()
+				Snacks.picker.commands()
 			end,
-			desc = "Commits (all)",
+			desc = "Commands (Ex palette)",
 		},
 		{
 			"<leader>fC",
 			function()
-				Snacks.picker.git_log({ current_file = true })
+				Snacks.picker.colorschemes()
 			end,
-			desc = "Commits (buf)",
+			desc = "Colorschemes",
 		},
 		{
 			"<leader>fs",
@@ -428,6 +428,20 @@ local spec = {
 				Snacks.picker.git_diff()
 			end,
 			desc = "Git Diff (Hunks)",
+		},
+		{
+			"<leader>gl",
+			function()
+				Snacks.picker.git_log()
+			end,
+			desc = "Git log (repo)",
+		},
+		{
+			"<leader>gL",
+			function()
+				Snacks.picker.git_log({ current_file = true, follow = true })
+			end,
+			desc = "Git log (buffer)",
 		},
 		-- New features
 		{
