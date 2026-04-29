@@ -59,9 +59,6 @@ nmap_leader("bs", new_scratch_buffer, "Scratch")
 
 -- e is for 'Explore' and 'Edit'
 -- NOTE: <Leader>ed, ef, en, eo are now in snacks.lua
-local edit_plugin_file = function(filename)
-	return string.format("<Cmd>edit %s/plugin/%s<CR>", vim.fn.stdpath("config"), filename)
-end
 local explore_quickfix = function()
 	for _, win_id in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
 		if vim.fn.getwininfo(win_id)[1].quickfix == 1 then
@@ -72,9 +69,21 @@ local explore_quickfix = function()
 end
 
 nmap_leader("ei", "<Cmd>edit $MYVIMRC<CR>", "init.lua")
-nmap_leader("ek", edit_plugin_file("20_keymaps.lua"), "Keymaps config")
-nmap_leader("em", edit_plugin_file("30_mini.lua"), "MINI config")
-nmap_leader("ep", edit_plugin_file("40_plugins.lua"), "Plugins config")
+nmap_leader(
+	"ek",
+	string.format("<Cmd>edit %s/lua/config/keymaps.lua<CR>", vim.fn.stdpath("config")),
+	"Keymaps config"
+)
+nmap_leader(
+	"em",
+	string.format("<Cmd>edit %s/lua/plugins/mini.lua<CR>", vim.fn.stdpath("config")),
+	"MINI config"
+)
+nmap_leader(
+	"ep",
+	string.format("<Cmd>edit %s/lua/plugins/snacks.lua<CR>", vim.fn.stdpath("config")),
+	"Snacks config"
+)
 nmap_leader("eq", explore_quickfix, "Quickfix")
 
 -- Git Flow integration
