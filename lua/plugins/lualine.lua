@@ -22,7 +22,6 @@ return {
 				lualine_a = { "mode" },
 				lualine_b = {
 					{ git_status, icon = "" },
-					"diff",
 					"diagnostics",
 				},
 				lualine_c = { { "filename", path = 1 } },
