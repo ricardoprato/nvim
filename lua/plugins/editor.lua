@@ -151,7 +151,20 @@ return {
 		opts = { file_types = { "markdown" } },
 	},
 
-	-- Diffview
+	-- Diffview ownership (Phase 3 — see .planning/phases/03-git-surface-consolidation/)
+	--   Owned here:
+	--     <leader>gv  Diffview (context-branched single key)
+	--                   1) toggle-close if a view exists in the current tab
+	--                   2) conflict-mode :DiffviewOpen when summary.in_progress
+	--                      substring-matches merge|rebase|cherry-pick|revert
+	--                   3) rev-range prompt via vim.ui.input (default HEAD~1..HEAD;
+	--                      empty input is a no-op — guards against working-tree default)
+	--   NOT owned here:
+	--     <leader>og                   mini.diff buffer overlay vs HEAD (lua/plugins/mini.lua)
+	--     <leader>gd                   Snacks.picker.git_diff hunks list (lua/plugins/snacks.lua)
+	--     <leader>gl/gL                Snacks.picker.git_log repo + buffer (lua/plugins/snacks.lua)
+	--   No autocmd-driven auto-detect or auto-prompt (D-11). Conflict markers visible
+	--   via mini.diff overlay + ⚠N statusline; user invokes <leader>gv when ready.
 	{
 		"sindrets/diffview.nvim",
 		cmd = { "DiffviewOpen", "DiffviewClose" },
@@ -160,13 +173,41 @@ return {
 				"<leader>gv",
 				function()
 					local lib = require("diffview.lib")
+					-- Branch 1: toggle-close if a view is open in the current tab.
 					if lib.get_current_view() then
 						vim.cmd("DiffviewClose")
-					else
-						vim.cmd("DiffviewOpen")
+						return
 					end
+					-- Branch 2: conflict-mode trigger. mini.git summary.in_progress
+					-- canonical strings (verified): bisect, cherry-pick, merge, revert,
+					-- apply (rebase-apply), rebase (rebase-merge). Multiple may be
+					-- comma-joined (e.g. "merge,rebase" when a rebase hits a conflict),
+					-- so substring-match each candidate rather than equality.
+					-- Trigger Diffview only on operations that produce 3-way conflict
+					-- markers; bisect + apply are deliberately excluded.
+					local summary = vim.b.minigit_summary
+					local in_progress = summary and summary.in_progress or ""
+					local triggers_3way = in_progress:match("merge")
+						or in_progress:match("rebase")
+						or in_progress:match("cherry%-pick")
+						or in_progress:match("revert")
+					if triggers_3way then
+						vim.cmd("DiffviewOpen")
+						return
+					end
+					-- Branch 3: rev-range prompt. Empty input is a no-op (T-V5
+					-- mitigation — bare :DiffviewOpen would default to working-tree
+					-- vs index, which D-10 deliberately scopes away from).
+					vim.ui.input(
+						{ prompt = "Diffview rev-range: ", default = "HEAD~1..HEAD" },
+						function(input)
+							if input and input ~= "" then
+								vim.cmd("DiffviewOpen " .. input)
+							end
+						end
+					)
 				end,
-				desc = "Diffview toggle",
+				desc = "Diffview (toggle / conflict / range)",
 			},
 		},
 		opts = { use_icons = true },
