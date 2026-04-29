@@ -2,6 +2,17 @@ return {
 	"echasnovski/mini.nvim",
 	lazy = false,
 	priority = 900,
+	-- Git surface ownership for mini (Phase 3 — see .planning/phases/03-git-surface-consolidation/)
+	--   Owned here:
+	--     mini.git statusline summary  vim.b.minigit_summary -> format_summary -> b:minigit_summary_string
+	--     mini.git :Git command runner :Git commit / :Git push / :Git pull --rebase / :Git checkout -
+	--     mini.git write keymaps       <leader>gc/gC/gp/gP/g-
+	--     mini.diff gutter signs       sole hunk-sign provider (no gitsigns installed)
+	--     mini.diff overlay            <leader>og toggle MiniDiff.toggle_overlay()
+	--   NOT owned here:
+	--     <leader>gb/gB/gd/gl/gL/gs/gS/go/gO  Snacks pickers + gitbrowse (lua/plugins/snacks.lua)
+	--     <leader>gv                          diffview (lua/plugins/editor.lua)
+	--     <leader>tg                          lazygit (lua/plugins/snacks.lua)
 	keys = {
 		-- Git (mini.git + mini.diff)
 		{ "<leader>gc", "<Cmd>Git commit<CR>", desc = "Commit" },

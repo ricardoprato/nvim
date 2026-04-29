@@ -378,6 +378,25 @@ local spec = {
 			mode = { "n", "x" },
 		},
 
+		-- Git surface ownership (Phase 3 — see .planning/phases/03-git-surface-consolidation/)
+		--   Owned here:
+		--     <leader>gb  blame_line       Snacks.git.blame_line
+		--     <leader>gB  branches picker  Snacks.picker.git_branches
+		--     <leader>gd  hunks picker     Snacks.picker.git_diff (NOT same as <leader>og overlay)
+		--     <leader>gl  repo log picker  Snacks.picker.git_log
+		--     <leader>gL  buf log picker   Snacks.picker.git_log({ current_file = true, follow = true })
+		--     <leader>gs  status picker    Snacks.picker.git_status
+		--     <leader>gS  stash picker     Snacks.picker.git_stash
+		--     <leader>go  gitbrowse file   Snacks.gitbrowse
+		--     <leader>gO  gitbrowse repo   Snacks.gitbrowse({ what = "repo" })
+		--     <leader>tg  lazygit TUI      Snacks.lazygit
+		--   NOT owned here:
+		--     <leader>gc/gC/gp/gP/g-       mini.git :Git wrapper (lua/plugins/mini.lua)
+		--     <leader>og                   mini.diff overlay (lua/plugins/mini.lua)
+		--     <leader>gv                   diffview (lua/plugins/editor.lua)
+		--   NOT installed: gitsigns (mini.diff owns gutter), neogit (lazygit owns TUI),
+		--                  vim-fugitive (mini.git owns :Git).
+
 		-- Git
 		{
 			"<leader>gb",
