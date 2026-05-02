@@ -72,14 +72,29 @@ local function project_swap_confirm(picker, item)
 
 	vim.fn.chdir(target)
 	pcall(require("persistence").load)
+
+	-- Restore window-local UI opts stomped by the dashboard buffer that briefly
+	-- occupied the window between the buffer purge above and the session load.
+	-- sessionoptions omits 'localoptions' (options.lua:29), so per-window opts
+	-- aren't restored from the session — re-assert from globals here. Skip
+	-- non-normal buftypes (terminal/help/quickfix) so their custom UI survives.
+	for _, win in ipairs(vim.api.nvim_list_wins()) do
+		local buf = vim.api.nvim_win_get_buf(win)
+		if vim.bo[buf].buftype == "" then
+			vim.api.nvim_set_option_value("number", vim.o.number, { win = win })
+			vim.api.nvim_set_option_value("relativenumber", vim.o.relativenumber, { win = win })
+			vim.api.nvim_set_option_value("signcolumn", vim.o.signcolumn, { win = win })
+			vim.api.nvim_set_option_value("cursorline", vim.o.cursorline, { win = win })
+		end
+	end
 end
 
 -- Builder for the project picker opts table. Used by both <leader>fp and
 -- <leader>sp keymaps so changes here apply uniformly.
 local function project_picker_opts()
 	return {
-		dev = { "~/odoo/17.0", "~/odoo/18.0", "~/odoo/19.0", "~/dev" },
-		patterns = { ".odoo_lsp", "__manifest__.py", ".git", "package.json", "pyproject.toml" },
+		patterns = { ".odoo_lsp", ".git", "package.json", "pyproject.toml" },
+		max_depth = 4,
 		recent = true,
 		confirm = project_swap_confirm,
 	}
