@@ -2,7 +2,7 @@ return {
 	"saghen/blink.cmp",
 	event = { "InsertEnter", "CmdlineEnter" },
 	build = "cargo build --release",
-	dependencies = { "rafamadriz/friendly-snippets" },
+	dependencies = { "rafamadriz/friendly-snippets", "saghen/blink.lib" },
 	config = function()
 		require("blink.cmp").setup({
 			snippets = { preset = "mini_snippets" },
