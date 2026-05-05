@@ -25,8 +25,7 @@
 local M = {}
 
 -- Allowlist: lhs is matched after `nvim_replace_termcodes` normalization, so
--- `<Leader>X` resolves to whatever the runtime leader is. See
--- .planning/phases/01-foundation/01-CONTEXT.md D-14.
+-- `<Leader>X` resolves to whatever the runtime leader is.
 M.allowlist = {
 	{
 		lhs = "<Leader>as",

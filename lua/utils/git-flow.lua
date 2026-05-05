@@ -87,7 +87,7 @@ local function exec(subcmd, args, opts)
 		return
 	end
 
-	-- Get repository root via 3-layer fallback (Phase 3 D-16)
+	-- Repo root via 3-layer fallback (mini.git → fugitive → git rev-parse).
 	local repo_path = require("utils.git").repo_root()
 	if not repo_path then
 		vim.notify("Not in a git repository", vim.log.levels.WARN)

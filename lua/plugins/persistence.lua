@@ -2,7 +2,7 @@ return {
 	"folke/persistence.nvim",
 	event = "BufReadPre",
 	opts = {
-		branch = true, -- NAV-05: per-branch session keying. Same as upstream default but locked here so the contract is checked into code.
+		branch = true, -- per-branch session keying
 	},
 	keys = {
 		{ "<leader>ss", function() require("persistence").select() end, desc = "Select session" },
@@ -13,11 +13,8 @@ return {
 	config = function(_, opts)
 		require("persistence").setup(opts)
 
-		-- Clean terminal and nofile buffers before saving (migrated from mini.sessions hook).
-		-- EXCEPTION: preserve claudecode.nvim float buffers — they are rendered as Snacks
-		-- terminal floats (`buftype == "terminal"`, `filetype == "snacks_terminal"`) but the
-		-- locked PROJECT.md constraint requires claudecode.nvim to survive every session
-		-- save (project swap via <leader>sp, VimLeavePre, etc.). Closes CR-01 from 02-VERIFICATION.md.
+		-- Drop terminal/nofile buffers before session save so they don't pollute the snapshot.
+		-- Exception: preserve claudecode floats so the chat survives project swaps and reloads.
 		vim.api.nvim_create_autocmd("User", {
 			pattern = "PersistenceSavePre",
 			callback = function()
@@ -35,14 +32,12 @@ return {
 					end
 				end
 			end,
-			desc = "Clean terminal/nofile buffers before save; preserve claudecode (CR-01)",
+			desc = "Drop terminal/nofile buffers before save; preserve claudecode",
 		})
 
-		-- Re-fire FileType per restored buffer so LSP (after/lsp/*.lua via vim.lsp.start),
-		-- treesitter, and ftplugin all wake without a manual :e (NAV-04). Self-assignment
-		-- is the canonical pattern — more reliable than `doautocmd FileType` across
-		-- NV 0.10..0.13 because it forces a fresh FileType emission even when the
-		-- buffer already had the same filetype set during session sourcing.
+		-- Re-fire FileType per restored buffer so LSP, treesitter, and ftplugin wake
+		-- without a manual :e. Self-assignment forces a fresh FileType emission even
+		-- when the buffer already had the same filetype set during session sourcing.
 		vim.api.nvim_create_autocmd("User", {
 			pattern = "PersistenceLoadPost",
 			callback = function()
@@ -59,7 +54,7 @@ return {
 					end
 				end
 			end,
-			desc = "Re-fire FileType per restored buffer (NAV-04)",
+			desc = "Re-fire FileType per restored buffer",
 		})
 	end,
 }

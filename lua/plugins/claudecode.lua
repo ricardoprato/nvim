@@ -12,15 +12,15 @@ return {
 		"ClaudeCodeSelectModel",
 	},
 	keys = {
-		-- <leader>ac      → singleton (v1.0 path: starts WebSocket + opens float).
+		-- <leader>ac      → singleton (starts WebSocket + opens float).
 		-- 2<leader>ac, 3… → spawn extra anonymous Claude floats sharing the
 		--                   singleton's WebSocket port (so @-mention still works
 		--                   in the extras as long as the singleton is running).
 		--
-		-- Pitfall 13 known limitation (spike-test 2026-05-03 verdict = FAIL):
-		-- the WebSocket server is bound to the cwd it FIRST started in. After
-		-- <leader>sp swaps cwd, @-mention still resolves against the original
-		-- project. Workaround: :Lazy reload claudecode.nvim to re-init.
+		-- Known limitation: the WebSocket server is bound to the cwd it FIRST
+		-- started in. After <leader>sp swaps cwd, @-mention still resolves
+		-- against the original project. Workaround: :Lazy reload claudecode.nvim
+		-- to re-init.
 		{
 			"<leader>ac",
 			function()

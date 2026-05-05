@@ -1,7 +1,6 @@
--- Cold-start detection (D-04): true iff fresh nvim with no real project buffers loaded.
--- Excludes [No Name], dashboard scratch, and unlisted helper buffers via the
--- named-and-listed filter — argc()==0 alone is not robust because nvim seeds
--- a [No Name] buffer at startup.
+-- True iff fresh nvim with no real project buffers loaded. argc()==0 alone is not
+-- robust because nvim seeds a [No Name] buffer at startup, so we filter to
+-- named-and-listed normal buffers.
 local function is_cold_start()
 	if vim.fn.argc() ~= 0 then
 		return false
@@ -19,22 +18,16 @@ local function is_cold_start()
 	return true
 end
 
--- D-02 atomic project-swap orchestrator. Wired as the `confirm` action of
+-- Atomic project-swap orchestrator. Wired as the `confirm` action of
 -- `Snacks.picker.projects` so picking a project triggers:
---   1. Snapshot Project A's session (PersistenceSavePre at persistence.lua
---      cleans non-claudecode terminal/nofile so they don't land in the
---      snapshot; the claudecode float is preserved by the is_claude guard
---      added in Plan 02-04 — see CR-01).
---   2. Silent `:wa` to flush modified writable buffers (D-01).
---   3. Close all `buftype==""` buffers; skip terminal/nofile so the floating
---      Claude Code chat survives the swap (survival enforced two-deep:
---      the close-loop here filters by buftype, AND the upstream
---      PersistenceSavePre filter in lua/plugins/persistence.lua preserves
---      the claudecode buffer through persistence.save() — see CR-01).
+--   1. Snapshot the current session (the PersistenceSavePre hook in
+--      persistence.lua drops non-claudecode terminal/nofile buffers).
+--   2. Silent `:wa` to flush modified writable buffers.
+--   3. Close all `buftype==""` buffers; terminal/nofile are skipped so the
+--      claudecode float survives the swap.
 --   4. `vim.fn.chdir(target)` — global chdir; doesn't fire DirChanged so
---      MiniMisc auto-root won't fight the chdir until next BufEnter.
---   5. `persistence.load()` — sources B's session for the current branch
---      (cwd+branch keying via `branch = true` set in Plan 02-02).
+--      MiniMisc auto-root won't fight it until next BufEnter.
+--   5. `persistence.load()` — sources the target's session for the current branch.
 -- Save failure aborts the swap (no partial state). Same-session re-pick is a no-op.
 local function project_swap_confirm(picker, item)
 	if not item or not item.file then
@@ -124,10 +117,10 @@ local spec = {
 						desc = "Recent Files",
 						action = ":lua Snacks.dashboard.pick('oldfiles')",
 					},
-					-- NOTE: dashboard projects entry uses default Snacks opts (no custom confirm),
-					-- so picking from the dashboard does NOT trigger the D-02 orchestrator.
-					-- This is for cold-start discoverability; in-session swaps go through
-					-- <leader>fp / <leader>sp which carry the orchestrator.
+					-- Dashboard projects entry uses default Snacks opts (no custom confirm),
+					-- so picking from the dashboard does NOT trigger the project-swap
+					-- orchestrator. This is for cold-start discoverability; in-session
+					-- swaps go through <leader>fp / <leader>sp which carry the orchestrator.
 					{ icon = " ", key = "p", desc = "Projects", action = ":lua Snacks.picker.projects()" },
 					{
 						icon = " ",
@@ -163,7 +156,6 @@ local spec = {
 		bufdelete = { enabled = true },
 		words = { enabled = true },
 
-		-- New features (Phase 3b)
 		animate = { enabled = true },
 		zen = { enabled = true },
 		dim = { enabled = true },
@@ -393,26 +385,24 @@ local spec = {
 			mode = { "n", "x" },
 		},
 
-		-- Git surface ownership (Phase 3 — see .planning/phases/03-git-surface-consolidation/)
-		--   Owned here:
-		--     <leader>gb  blame_line       Snacks.git.blame_line
-		--     <leader>gB  branches picker  Snacks.picker.git_branches
-		--     <leader>gd  hunks picker     Snacks.picker.git_diff (NOT same as <leader>og overlay)
-		--     <leader>gl  repo log picker  Snacks.picker.git_log
-		--     <leader>gL  buf log picker   Snacks.picker.git_log({ current_file = true, follow = true })
-		--     <leader>gs  status picker    Snacks.picker.git_status
-		--     <leader>gS  stash picker     Snacks.picker.git_stash
-		--     <leader>go  gitbrowse file   Snacks.gitbrowse
-		--     <leader>gO  gitbrowse repo   Snacks.gitbrowse({ what = "repo" })
-		--     <leader>tg  lazygit TUI      Snacks.lazygit
-		--   NOT owned here:
-		--     <leader>gc/gC/gp/gP/g-       mini.git :Git wrapper (lua/plugins/mini.lua)
-		--     <leader>og                   mini.diff overlay (lua/plugins/mini.lua)
-		--     <leader>gv                   diffview (lua/plugins/editor.lua)
-		--   NOT installed: gitsigns (mini.diff owns gutter), neogit (lazygit owns TUI),
-		--                  vim-fugitive (mini.git owns :Git).
+		-- Git surface owned here:
+		--   <leader>gb  blame_line       Snacks.git.blame_line
+		--   <leader>gB  branches picker  Snacks.picker.git_branches
+		--   <leader>gd  hunks picker     Snacks.picker.git_diff (NOT same as <leader>og overlay)
+		--   <leader>gl  repo log picker  Snacks.picker.git_log
+		--   <leader>gL  buf log picker   Snacks.picker.git_log({ current_file = true, follow = true })
+		--   <leader>gs  status picker    Snacks.picker.git_status
+		--   <leader>gS  stash picker     Snacks.picker.git_stash
+		--   <leader>go  gitbrowse file   Snacks.gitbrowse
+		--   <leader>gO  gitbrowse repo   Snacks.gitbrowse({ what = "repo" })
+		--   <leader>tg  lazygit TUI      Snacks.lazygit
+		-- Owned elsewhere:
+		--   <leader>gc/gC/gp/gP/g-       mini.git :Git wrapper (lua/plugins/mini.lua)
+		--   <leader>og                   mini.diff overlay (lua/plugins/mini.lua)
+		--   <leader>gv                   diffview (lua/plugins/editor.lua)
+		-- Not installed: gitsigns (mini.diff owns gutter), neogit (lazygit owns TUI),
+		--                vim-fugitive (mini.git owns :Git).
 
-		-- Git
 		{
 			"<leader>gb",
 			function()

@@ -15,16 +15,14 @@ local M = {}
 M._status_cache = { ahead = 0, behind = 0 }
 M._in_flight = false
 
--- Resolve a git worktree (repo) root via a three-layer fallback (D-16).
+-- Resolve a git worktree (repo) root via a three-layer fallback:
 --   1. Passed-through `maybe_path` (if non-nil)
 --   2. `Snacks.git.get_root()` (when Snacks is loaded)
---   3. `vim.fs.root(bufnr or 0, ".git")` -- independent stdlib walk; covers
---      the early-startup case where Snacks isn't yet loaded. Snacks.git.get_root
---      does NOT internally use vim.fs.root, so this layer is genuine coverage.
--- Returns nil on full failure; callers guard locally (D-17/D-18 -- silent
--- failure, no vim.fn.getcwd() last-resort, no vim.notify).
--- Note: vim.fs.root returns nil for buffers without an on-disk path
--- (e.g. :enew scratch buffers); callers must early-return on nil.
+--   3. `vim.fs.root(bufnr or 0, ".git")` — independent stdlib walk; covers
+--      the early-startup case where Snacks isn't yet loaded.
+-- Returns nil on full failure; callers must guard locally (no vim.fn.getcwd()
+-- last-resort, no vim.notify). vim.fs.root returns nil for buffers without an
+-- on-disk path (e.g. :enew scratch buffers).
 ---@param maybe_path? string  candidate path passed in (passthrough if non-nil)
 ---@param bufnr? integer      buffer to anchor `vim.fs.root` against (default 0)
 ---@return string?            worktree root, or nil

@@ -151,20 +151,19 @@ return {
 		opts = { file_types = { "markdown" } },
 	},
 
-	-- Diffview ownership (Phase 3 — see .planning/phases/03-git-surface-consolidation/)
-	--   Owned here:
-	--     <leader>gv  Diffview (context-branched single key)
-	--                   1) toggle-close if a view exists in the current tab
-	--                   2) conflict-mode :DiffviewOpen when summary.in_progress
-	--                      substring-matches merge|rebase|cherry-pick|revert
-	--                   3) rev-range prompt via vim.ui.input (default HEAD~1..HEAD;
-	--                      empty input is a no-op — guards against working-tree default)
-	--   NOT owned here:
-	--     <leader>og                   mini.diff buffer overlay vs HEAD (lua/plugins/mini.lua)
-	--     <leader>gd                   Snacks.picker.git_diff hunks list (lua/plugins/snacks.lua)
-	--     <leader>gl/gL                Snacks.picker.git_log repo + buffer (lua/plugins/snacks.lua)
-	--   No autocmd-driven auto-detect or auto-prompt (D-11). Conflict markers visible
-	--   via mini.diff overlay + ⚠N statusline; user invokes <leader>gv when ready.
+	-- Diffview surface owned here:
+	--   <leader>gv  Diffview (context-branched single key)
+	--                 1) toggle-close if a view exists in the current tab
+	--                 2) conflict-mode :DiffviewOpen when summary.in_progress
+	--                    substring-matches merge|rebase|cherry-pick|revert
+	--                 3) rev-range prompt via vim.ui.input (default HEAD~1..HEAD;
+	--                    empty input is a no-op — guards against working-tree default)
+	-- Owned elsewhere:
+	--   <leader>og                   mini.diff buffer overlay vs HEAD (lua/plugins/mini.lua)
+	--   <leader>gd                   Snacks.picker.git_diff hunks list (lua/plugins/snacks.lua)
+	--   <leader>gl/gL                Snacks.picker.git_log repo + buffer (lua/plugins/snacks.lua)
+	-- No autocmd-driven auto-detect or auto-prompt: conflict markers are visible via
+	-- mini.diff overlay + ⚠N statusline; user invokes <leader>gv when ready.
 	{
 		"sindrets/diffview.nvim",
 		cmd = { "DiffviewOpen", "DiffviewClose" },
@@ -195,9 +194,9 @@ return {
 						vim.cmd("DiffviewOpen")
 						return
 					end
-					-- Branch 3: rev-range prompt. Empty input is a no-op (T-V5
-					-- mitigation — bare :DiffviewOpen would default to working-tree
-					-- vs index, which D-10 deliberately scopes away from).
+					-- Branch 3: rev-range prompt. Empty input is a no-op so the
+					-- prompt can't accidentally fall through to bare :DiffviewOpen
+					-- (which would default to working-tree vs index).
 					vim.ui.input(
 						{ prompt = "Diffview rev-range: ", default = "HEAD~1..HEAD" },
 						function(input)
