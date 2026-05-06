@@ -14,14 +14,34 @@ function M.navigate(dir)
 	end
 
 	local cur_win = vim.api.nvim_get_current_win()
+
+	-- Floating windows (claudecode, lazygit, lazydocker, etc.) don't
+	-- participate in wincmd's window graph, so navigation strands the user
+	-- inside the float. Close it and continue the navigation from the
+	-- underlying split; bufhidden=hide on these terminals keeps the buffer
+	-- alive so toggling reopens with same state.
+	if vim.api.nvim_win_get_config(cur_win).relative ~= "" then
+		local has_normal_win = false
+		for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+			if w ~= cur_win and vim.api.nvim_win_get_config(w).relative == "" then
+				has_normal_win = true
+				break
+			end
+		end
+		if not has_normal_win then
+			return
+		end
+		pcall(vim.api.nvim_win_close, cur_win, false)
+		cur_win = vim.api.nvim_get_current_win()
+	end
+
 	vim.cmd("wincmd " .. dir)
 
 	if vim.api.nvim_get_current_win() == cur_win then
-		-- Inside a float, wincmd h/j/k/l is a no-op. Without this guard the
-		-- kitty fallback would fire and swap the terminal pane underneath the
-		-- user, losing nvim focus entirely. The check is here (not before
-		-- wincmd) so non-float panes inside snacks composites can still
-		-- escape via wincmd.
+		-- Still inside a float (close failed or close landed in another
+		-- float — unusual). Don't fall through to kitty: it would swap the
+		-- kitty pane underneath the user. Non-float panes inside snacks
+		-- composites already escaped via wincmd above.
 		if vim.api.nvim_win_get_config(cur_win).relative ~= "" then
 			return
 		end
