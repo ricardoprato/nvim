@@ -1,11 +1,14 @@
 return {
 	"saghen/blink.cmp",
 	event = { "InsertEnter", "CmdlineEnter" },
-	build = "cargo build --release",
+	build = function()
+		require("blink.cmp").build():wait(60000)
+	end,
 	dependencies = { "rafamadriz/friendly-snippets", "saghen/blink.lib" },
 	config = function()
 		require("blink.cmp").setup({
 			snippets = { preset = "mini_snippets" },
+			fuzzy = { implementation = "rust" },
 			sources = {
 				default = { "lazydev", "lsp", "path", "snippets", "buffer" },
 				providers = {
