@@ -37,6 +37,22 @@ M.allowlist = {
 		modes = { "n", "v" },
 		rationale = "kulala ftplugin override of grug-far in http/rest filetypes",
 	},
+	-- Pre-existing upstream-plugin overlaps (added Phase 7 closing-gate audit):
+	{
+		lhs = "<C-S>",
+		modes = { "v" },
+		rationale = "snacks save (silent update|redraw) overlaps lsp signature_help in visual mode; both upstream",
+	},
+	{
+		lhs = "[[",
+		modes = { "n", "v", "x" },
+		rationale = "$VIMRUNTIME/ftplugin/python.vim class/def jump shadows global treesitter prev-reference in python buffers",
+	},
+	{
+		lhs = "]]",
+		modes = { "n", "v", "x" },
+		rationale = "$VIMRUNTIME/ftplugin/python.vim class/def jump shadows global treesitter next-reference in python buffers",
+	},
 }
 
 local MODES = { "n", "v", "x", "i", "o", "t" }
