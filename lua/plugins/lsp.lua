@@ -60,7 +60,14 @@ return {
 				automatic_installation = true,
 			})
 			require("mason-tool-installer").setup({
-				ensure_installed = { "stylua", "black", "isort", "prettier" },
+				ensure_installed = {
+					"stylua",                                          -- Lua
+					"black", "isort", "ruff", "mypy", "debugpy",       -- Python (ruff coexists, NOT replaces)
+					"prettier", "prettierd", "eslint_d",               -- JS/TS
+					"markdownlint-cli2",                               -- Markdown (closes CONCERNS.md gap)
+					"shellcheck", "shfmt",                             -- Shell
+					"taplo", "hadolint",                               -- TOML, Dockerfile
+				},
 				auto_update = true,
 			})
 		end,
