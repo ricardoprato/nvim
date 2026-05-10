@@ -1,3 +1,9 @@
+-- Captured at module load (lazy.nvim evals plugin specs before any DirChanged),
+-- so this is the directory nvim was launched from. Frozen — subsequent project
+-- swaps (which call vim.fn.chdir) won't shift this value, which is exactly what
+-- we want for the <leader>sp scope.
+local startup_cwd = vim.fn.getcwd()
+
 -- True iff fresh nvim with no real project buffers loaded. argc()==0 alone is not
 -- robust because nvim seeds a [No Name] buffer at startup, so we filter to
 -- named-and-listed normal buffers.
@@ -82,13 +88,28 @@ local function project_swap_confirm(picker, item)
 	end
 end
 
--- Builder for the project picker opts table. Used by both <leader>fp and
--- <leader>sp keymaps so changes here apply uniformly.
+-- Builder for <leader>fp (global find): default snacks projects behavior +
+-- atomic-swap confirm. Includes oldfiles via `recent = true` so any recently
+-- visited project is reachable regardless of where nvim was launched.
 local function project_picker_opts()
 	return {
 		patterns = { ".odoo_lsp", ".git", "package.json", "pyproject.toml" },
 		max_depth = 4,
 		recent = true,
+		confirm = project_swap_confirm,
+	}
+end
+
+-- Builder for <leader>sp (scoped swap): only lists projects whose root pattern
+-- lives under `startup_cwd`. `dev` tells fd which roots to scan; `recent=false`
+-- suppresses the oldfiles fallback so the picker stays strictly local. Useful
+-- when nvim is launched at a workspace root containing many sibling repos.
+local function project_picker_opts_scoped()
+	return {
+		patterns = { ".odoo_lsp", ".git", "package.json", "pyproject.toml" },
+		max_depth = 4,
+		dev = { startup_cwd },
+		recent = false,
 		confirm = project_swap_confirm,
 	}
 end
@@ -121,7 +142,7 @@ local spec = {
 					-- so picking from the dashboard does NOT trigger the project-swap
 					-- orchestrator. This is for cold-start discoverability; in-session
 					-- swaps go through <leader>fp / <leader>sp which carry the orchestrator.
-					{ icon = " ", key = "p", desc = "Projects", action = ":lua Snacks.picker.projects()" },
+					{ icon = " ", key = "p", desc = "Projects", action = ":lua Snacks.picker.projects()" },
 					{
 						icon = " ",
 						key = "c",
@@ -315,9 +336,9 @@ local spec = {
 		{
 			"<leader>sp",
 			function()
-				Snacks.picker.projects(project_picker_opts())
+				Snacks.picker.projects(project_picker_opts_scoped())
 			end,
-			desc = "Projects (swap session)",
+			desc = "Projects under launch cwd (swap)",
 		},
 		-- Explorer (replacing mini.files)
 		{
