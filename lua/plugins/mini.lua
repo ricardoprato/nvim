@@ -201,7 +201,20 @@ return {
 			MiniSnippets.start_lsp_server()
 
 			require("mini.splitjoin").setup()
-			require("mini.surround").setup()
+			require("mini.surround").setup({
+				-- Relocate to `gs*` prefix so `s` stays free for flash.nvim (Phase 7
+				-- D-01). Default `s*` mappings forced a `timeoutlen` wait on every
+				-- flash trigger; `gsa/gsd/gsf/gsF/gsh/gsn/gsr` removes the aliasing.
+				mappings = {
+					add = "gsa",
+					delete = "gsd",
+					find = "gsf",
+					find_left = "gsF",
+					highlight = "gsh",
+					replace = "gsr",
+					update_n_lines = "gsn",
+				},
+			})
 			require("mini.trailspace").setup()
 			require("mini.visits").setup()
 		end) -- end vim.schedule
