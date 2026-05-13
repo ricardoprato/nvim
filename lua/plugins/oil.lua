@@ -15,7 +15,12 @@ return {
 			max_width = 100,
 			max_height = 30,
 		},
+		-- Unified close: `q` and `<Esc>` both call actions.close, which DTRT for
+		-- split (restore prior buffer) and float (close window) without leaking
+		-- the oil buffer like `<leader>bd` does.
 		keymaps = {
+			["q"] = { "actions.close", mode = "n" },
+			["<Esc>"] = { "actions.close", mode = "n" },
 			["<C-p>"] = { "actions.preview", mode = "n" },
 			["gd"] = { "actions.toggle_hidden", mode = "n" },
 			["g?"] = { "actions.show_help", mode = "n" },
