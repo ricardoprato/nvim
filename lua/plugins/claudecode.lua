@@ -12,55 +12,7 @@ return {
 		"ClaudeCodeSelectModel",
 	},
 	keys = {
-		-- <leader>ac      → singleton (starts WebSocket + opens float).
-		-- 2<leader>ac, 3… → spawn extra anonymous Claude floats sharing the
-		--                   singleton's WebSocket port (so @-mention still works
-		--                   in the extras as long as the singleton is running).
-		--
-		-- Known limitation: the WebSocket server is bound to the cwd it FIRST
-		-- started in. After <leader>sp swaps cwd, @-mention still resolves
-		-- against the original project. Workaround: :Lazy reload claudecode.nvim
-		-- to re-init.
-		{
-			"<leader>ac",
-			function()
-				local count = vim.v.count1
-				if count == 1 then
-					vim.cmd("ClaudeCode")
-					return
-				end
-				local env = {}
-				local ok, server = pcall(require, "claudecode.server.init")
-				if ok and server and server.state and server.state.port then
-					env.CLAUDE_CODE_SSE_PORT = tostring(server.state.port)
-				end
-				Snacks.terminal.open("claude", {
-					cwd = vim.fn.getcwd(),
-					env = env,
-					count = 1000 + count,
-					bo = { bufhidden = "hide" },
-					win = {
-						position = "float",
-						width = 0.95,
-						height = 0.95,
-						border = "rounded",
-						title = " Claude #" .. count .. " ",
-						keys = {
-							claude_extra_hide = {
-								"<C-,>",
-								function(self)
-									self:hide()
-								end,
-								mode = "t",
-								desc = "Hide Claude",
-							},
-						},
-					},
-					start_insert = true,
-				})
-			end,
-			desc = "Toggle Claude (count: extra instance)",
-		},
+		{ "<leader>ac", "<cmd>ClaudeCode<cr>", desc = "Toggle Claude" },
 		{ "<leader>af", "<cmd>ClaudeCodeFocus<cr>", desc = "Focus Claude" },
 		{ "<leader>ar", "<cmd>ClaudeCode --resume<cr>", desc = "Resume Claude" },
 		{ "<leader>aC", "<cmd>ClaudeCode --continue<cr>", desc = "Continue Claude" },
@@ -79,11 +31,18 @@ return {
 	},
 	opts = {
 		terminal = {
+			split_side = "right",
+			split_width_percentage = 0.40,
 			snacks_win_opts = {
-				position = "float",
-				width = 0.95,
-				height = 0.95,
-				border = "rounded",
+				wo = {
+					signcolumn = "no",
+					number = false,
+					relativenumber = false,
+					statuscolumn = "",
+					wrap = false,
+					list = false,
+				},
+				bo = { scrollback = 100000 },
 				keys = {
 					claude_hide = {
 						"<C-,>",
