@@ -56,8 +56,11 @@ return {
 			},
 		},
 		diff_opts = {
-			open_in_new_tab = true,
+			layout = "vertical",
+			open_in_new_tab = false,
 			hide_terminal_in_new_tab = true,
+			auto_close_on_accept = true,
+			show_diff_stats = true,
 		},
 	},
 }
