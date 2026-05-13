@@ -215,6 +215,20 @@ local spec = {
 			desc = "Grep",
 		},
 		{
+			"<leader>fF",
+			function()
+				Snacks.picker.files({ cwd = _G.Config.initial_cwd })
+			end,
+			desc = "Files (launch dir)",
+		},
+		{
+			"<leader>fG",
+			function()
+				Snacks.picker.grep({ cwd = _G.Config.initial_cwd })
+			end,
+			desc = "Grep (launch dir)",
+		},
+		{
 			"<leader>fb",
 			function()
 				Snacks.picker.buffers()
@@ -409,7 +423,6 @@ local spec = {
 		-- Git surface owned here:
 		--   <leader>gb  blame_line       Snacks.git.blame_line
 		--   <leader>gB  branches picker  Snacks.picker.git_branches
-		--   <leader>gd  hunks picker     Snacks.picker.git_diff (NOT same as <leader>og overlay)
 		--   <leader>gl  repo log picker  Snacks.picker.git_log
 		--   <leader>gL  buf log picker   Snacks.picker.git_log({ current_file = true, follow = true })
 		--   <leader>gs  status picker    Snacks.picker.git_status
@@ -420,7 +433,8 @@ local spec = {
 		-- Owned elsewhere:
 		--   <leader>gc/gC/gp/gP/g-       mini.git :Git wrapper (lua/plugins/mini.lua)
 		--   <leader>og                   mini.diff overlay (lua/plugins/mini.lua)
-		--   <leader>gv                   diffview (lua/plugins/editor.lua)
+		--   <leader>gd                   diffview working-tree (lua/plugins/editor.lua)
+		--   <leader>gv                   diffview toggle/conflict/range (lua/plugins/editor.lua)
 		-- Not installed: gitsigns (mini.diff owns gutter), neogit (lazygit owns TUI),
 		--                vim-fugitive (mini.git owns :Git).
 
@@ -466,13 +480,6 @@ local spec = {
 				Snacks.picker.git_stash()
 			end,
 			desc = "Git Stash",
-		},
-		{
-			"<leader>gd",
-			function()
-				Snacks.picker.git_diff()
-			end,
-			desc = "Git Diff (Hunks)",
 		},
 		{
 			"<leader>gl",
