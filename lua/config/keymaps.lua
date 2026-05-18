@@ -41,6 +41,12 @@ else
 	nmap("<C-l>", "<C-w>l", "Move to right window")
 end
 
+-- Window resize (mini.basics windows=false, so re-add only the resize subset)
+nmap("<C-Left>",  "<Cmd>vertical resize -2<CR>", "Resize window narrower")
+nmap("<C-Right>", "<Cmd>vertical resize +2<CR>", "Resize window wider")
+nmap("<C-Down>",  "<Cmd>resize -2<CR>",          "Resize window shorter")
+nmap("<C-Up>",    "<Cmd>resize +2<CR>",          "Resize window taller")
+
 -- Leader mappings ============================================================
 
 local nmap_leader = function(suffix, rhs, desc)
