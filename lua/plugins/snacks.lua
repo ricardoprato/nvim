@@ -168,7 +168,9 @@ local spec = {
  ╚═╝  ╚═══╝  ╚═══╝  ╚═╝╚═╝     ╚═╝]],
 			},
 		},
-		notifier = { enabled = true, timeout = 3000 },
+		-- `top_down = false` anchors toasts to bottom-right and stacks upward.
+		-- snacks.notifier has no free `position` knob; X is always right-edge.
+		notifier = { enabled = true, timeout = 3000, top_down = false },
 		picker = { enabled = true },
 		explorer = { enabled = true },
 		indent = { enabled = true, animate = { enabled = true } },
