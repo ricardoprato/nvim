@@ -9,7 +9,10 @@ return {
 				["vim.lsp.util.stylize_markdown"] = true,
 				["cmp.entry.get_documentation"] = true,
 			},
-			progress = { enabled = true },
+			-- `view = "notify"` sends LSP progress through vim.notify (snacks
+			-- notifier toast) instead of the default `mini` view that overlays
+			-- the bottom-right and clashes with the claudecode split.
+			progress = { enabled = true, view = "notify" },
 		},
 		presets = {
 			bottom_search = true,
@@ -25,5 +28,35 @@ return {
 				opts = { skip = true },
 			},
 		},
+		views = {
+			notify = {
+				replace = true,
+				merge = true,
+			},
+		},
 	},
+	config = function(_, opts)
+		require("noice").setup(opts)
+		-- Safety net: when any noice float closes, force a redraw so terminal
+		-- buffers (claudecode) don't show stale rows where the overlay sat.
+		local grp = vim.api.nvim_create_augroup("noice-terminal-redraw", { clear = true })
+		vim.api.nvim_create_autocmd("WinClosed", {
+			group = grp,
+			callback = function(args)
+				local win = tonumber(args.match)
+				if not win or not vim.api.nvim_win_is_valid(win) then
+					return
+				end
+				local buf = vim.api.nvim_win_get_buf(win)
+				local ft = vim.bo[buf].filetype or ""
+				if ft:match("^noice") then
+					-- Defer so the close completes before the redraw call.
+					vim.schedule(function()
+						vim.cmd("mode")
+					end)
+				end
+			end,
+			desc = "Redraw after noice float closes (fixes claude terminal stale rows)",
+		})
+	end,
 }
