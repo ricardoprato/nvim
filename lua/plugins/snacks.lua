@@ -508,9 +508,26 @@ local spec = {
 		{
 			"<leader>td",
 			function()
-				Snacks.terminal("lazydocker")
+				local buf = vim.api.nvim_buf_get_name(0)
+				local start = buf ~= "" and vim.fs.dirname(buf) or vim.fn.getcwd()
+				local found = vim.fs.find(
+					{ "docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml" },
+					{ upward = true, path = start, type = "file" }
+				)[1]
+				local cmd = "lazydocker"
+				local cwd = vim.fn.getcwd()
+				if found then
+					cwd = vim.fs.dirname(found)
+					-- Mirror docker compose's default project-name sanitization:
+					-- lowercase the dir basename, drop anything outside [a-z0-9_-].
+					local project = vim.fs.basename(cwd):lower():gsub("[^a-z0-9_-]", "")
+					if project ~= "" then
+						cmd = "lazydocker -p " .. project
+					end
+				end
+				Snacks.terminal(cmd, { cwd = cwd })
 			end,
-			desc = "Lazydocker",
+			desc = "Lazydocker (project-aware)",
 		},
 		{
 			"<leader>tf",
