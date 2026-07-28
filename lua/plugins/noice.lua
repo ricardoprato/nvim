@@ -9,10 +9,11 @@ return {
 				["vim.lsp.util.stylize_markdown"] = true,
 				["cmp.entry.get_documentation"] = true,
 			},
-			-- `view = "notify"` sends LSP progress through vim.notify (snacks
-			-- notifier toast) instead of the default `mini` view that overlays
-			-- the bottom-right and clashes with the claudecode split.
-			progress = { enabled = true, view = "notify" },
+			-- LSP progress disabled: pyright re-analyzes the huge Odoo workspace
+			-- on every change, and each progress toast opening/closing triggered
+			-- the WinClosed `mode` redraw below, flickering every dropbar winbar
+			-- (the .py breadcrumb and the claudecode terminal breadcrumb).
+			progress = { enabled = false },
 		},
 		presets = {
 			bottom_search = true,

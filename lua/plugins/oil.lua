@@ -30,8 +30,12 @@ return {
 	-- (netrw is already disabled in init.lua:36-39).
 	lazy = false,
 	keys = {
-		{ "-", function() require("oil").open() end, desc = "Open parent dir (oil)" },
-		{ "_", function() require("oil").open_float() end, desc = "Open oil (float)" },
+		-- Both mappings float. `-` opens the current file's dir (module-level quick
+		-- edit); `_` opens the cwd (project root, which auto_root anchors to the
+		-- client .git repo). Change cwd from inside oil with the default `` ` ``
+		-- (actions.cd), which use_default_keymaps keeps active.
+		{ "-", function() require("oil").open_float() end, desc = "Oil float (file dir)" },
+		{ "_", function() require("oil").open_float(vim.fn.getcwd()) end, desc = "Oil float (cwd)" },
 		-- Trash view: `:Oil --trash` (infrequent op, no keymap to keep <leader>o namespace clean)
 	},
 }

@@ -4,37 +4,15 @@
 -- we want for the <leader>sp scope.
 local startup_cwd = vim.fn.getcwd()
 
--- True iff fresh nvim with no real project buffers loaded. argc()==0 alone is not
--- robust because nvim seeds a [No Name] buffer at startup, so we filter to
--- named-and-listed normal buffers.
-local function is_cold_start()
-	if vim.fn.argc() ~= 0 then
-		return false
-	end
-	for _, b in ipairs(vim.api.nvim_list_bufs()) do
-		if
-			vim.api.nvim_buf_is_loaded(b)
-			and vim.bo[b].buftype == ""
-			and vim.api.nvim_buf_get_name(b) ~= ""
-			and vim.fn.buflisted(b) == 1
-		then
-			return false
-		end
-	end
-	return true
-end
-
--- Atomic project-swap orchestrator. Wired as the `confirm` action of
--- `Snacks.picker.projects` so picking a project triggers:
---   1. Snapshot the current session (the PersistenceSavePre hook in
---      persistence.lua drops non-claudecode terminal/nofile buffers).
---   2. Silent `:wa` to flush modified writable buffers.
---   3. Close all `buftype==""` buffers; terminal/nofile are skipped so the
---      claudecode float survives the swap.
---   4. `vim.fn.chdir(target)` — global chdir; doesn't fire DirChanged so
---      MiniMisc auto-root won't fight it until next BufEnter.
---   5. `persistence.load()` — sources the target's session for the current branch.
--- Save failure aborts the swap (no partial state). Same-session re-pick is a no-op.
+-- Project-swap confirm. Wired as the `confirm` action of `Snacks.picker.projects`.
+-- Changes the global cwd to the picked project and nothing else: open buffers are
+-- kept across swaps (no session save/close/restore). Persistence still auto-saves
+-- per-cwd on exit via its own autocmds; the swap just doesn't touch sessions.
+--
+-- MiniMisc auto_root (mini.lua) re-anchors cwd to the focused buffer's project on
+-- the next BufEnter, so cwd ends up tracking whichever buffer you're on. This
+-- explicit chdir only sets the immediate cwd so a follow-up find-files is scoped
+-- to the project just picked. Re-picking the current cwd is a no-op.
 local function project_swap_confirm(picker, item)
 	if not item or not item.file then
 		return
@@ -46,46 +24,11 @@ local function project_swap_confirm(picker, item)
 		return
 	end
 
-	-- Same-session no-op (avoid round-trip when re-picking current project)
-	if vim.v.this_session ~= "" and vim.fn.getcwd() == target then
+	if vim.fn.getcwd() == target then
 		return
 	end
 
-	if not is_cold_start() then
-		local persistence = require("persistence")
-
-		local save_ok = pcall(persistence.save)
-		if not save_ok then
-			vim.notify("project swap aborted: persistence.save() failed", vim.log.levels.ERROR)
-			return
-		end
-
-		pcall(vim.cmd, "silent! wa")
-
-		for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-			if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].buftype == "" then
-				pcall(vim.api.nvim_buf_delete, buf, { force = false })
-			end
-		end
-	end
-
 	vim.fn.chdir(target)
-	pcall(require("persistence").load)
-
-	-- Restore window-local UI opts stomped by the dashboard buffer that briefly
-	-- occupied the window between the buffer purge above and the session load.
-	-- sessionoptions omits 'localoptions' (options.lua:29), so per-window opts
-	-- aren't restored from the session — re-assert from globals here. Skip
-	-- non-normal buftypes (terminal/help/quickfix) so their custom UI survives.
-	for _, win in ipairs(vim.api.nvim_list_wins()) do
-		local buf = vim.api.nvim_win_get_buf(win)
-		if vim.bo[buf].buftype == "" then
-			vim.api.nvim_set_option_value("number", vim.o.number, { win = win })
-			vim.api.nvim_set_option_value("relativenumber", vim.o.relativenumber, { win = win })
-			vim.api.nvim_set_option_value("signcolumn", vim.o.signcolumn, { win = win })
-			vim.api.nvim_set_option_value("cursorline", vim.o.cursorline, { win = win })
-		end
-	end
 end
 
 -- Builder for <leader>fp (global find): default snacks projects behavior +
@@ -172,7 +115,9 @@ local spec = {
 		-- snacks.notifier has no free `position` knob; X is always right-edge.
 		notifier = { enabled = true, timeout = 3000, top_down = false },
 		picker = { enabled = true },
-		explorer = { enabled = true },
+		-- explorer disabled: mini.files owns the file-tree surface (lua/plugins/mini.lua).
+		-- Keymaps <leader>ed / <leader>ef moved there.
+		explorer = { enabled = false },
 		indent = { enabled = true, animate = { enabled = true } },
 		scroll = { enabled = true, animate = { duration = { step = 15, total = 250 } } },
 		bigfile = { enabled = true },
@@ -356,21 +301,7 @@ local spec = {
 			end,
 			desc = "Projects under launch cwd (swap)",
 		},
-		-- Explorer (replacing mini.files)
-		{
-			"<leader>ed",
-			function()
-				Snacks.explorer()
-			end,
-			desc = "Explorer (cwd)",
-		},
-		{
-			"<leader>ef",
-			function()
-				Snacks.explorer({ cwd = vim.fn.expand("%:p:h") })
-			end,
-			desc = "Explorer (file dir)",
-		},
+		-- Explorer moved to mini.files (<leader>ed / <leader>ef in lua/plugins/mini.lua).
 
 		-- Notifications history (replacing mini.notify)
 		{
