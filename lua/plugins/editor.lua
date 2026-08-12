@@ -165,6 +165,14 @@ return {
 	--                    substring-matches merge|rebase|cherry-pick|revert
 	--                 3) rev-range prompt via vim.ui.input (default HEAD~1..HEAD;
 	--                    empty input is a no-op — guards against working-tree default)
+	--   <leader>gr  Branch review — <base>...HEAD --imply-local
+	--                 Flat diff of everything this branch added since it forked.
+	--                 Three dots = merge-base, so commits that landed on the base
+	--                 after the fork stay out; --imply-local makes the right pane
+	--                 the live working-tree file, so fixes are typed in place.
+	--   <leader>gR  Branch review, commit-by-commit — :DiffviewFileHistory --range=
+	--   Base ref is resolved by utils.git-base (cached → git-flow → merge-base →
+	--   remote HEAD), never hardcoded; :DiffviewBase shows/sets/clears it.
 	-- Owned elsewhere:
 	--   <leader>og                   mini.diff buffer overlay vs HEAD (lua/plugins/mini.lua)
 	--   <leader>gl/gL                Snacks.picker.git_log repo + buffer (lua/plugins/snacks.lua)
@@ -173,7 +181,7 @@ return {
 	-- mini.diff overlay + ⚠N statusline; user invokes <leader>gv when ready.
 	{
 		"sindrets/diffview.nvim",
-		cmd = { "DiffviewOpen", "DiffviewClose" },
+		cmd = { "DiffviewOpen", "DiffviewClose", "DiffviewFileHistory" },
 		keys = {
 			{
 				"<leader>gd",
@@ -227,8 +235,36 @@ return {
 				end,
 				desc = "Diffview (toggle / conflict / range)",
 			},
+			{
+				"<leader>gr",
+				function()
+					require("utils.git-base").open()
+				end,
+				desc = "Diffview review vs base branch",
+			},
+			{
+				"<leader>gR",
+				function()
+					require("utils.git-base").open({ history = true })
+				end,
+				desc = "Diffview review vs base (per commit)",
+			},
 		},
-		opts = { use_icons = true },
+		opts = {
+			use_icons = true,
+			-- Diffview's layout names invert vim's split terms: diff2_horizontal
+			-- runs `vsp` (panes side by side), diff2_vertical runs `sp` (stacked).
+			-- Stacked gives each pane the full window width — better for long
+			-- lines than two narrow columns. Deep-merged over the defaults, so
+			-- disable_diagnostics / winbar_info stay as shipped.
+			-- merge_tool is left alone on purpose: it defaults to diff3_horizontal,
+			-- and three stacked panes make conflict resolution cramped.
+			-- g<C-x> still cycles layouts at runtime without touching this.
+			view = {
+				default = { layout = "diff2_vertical" },
+				file_history = { layout = "diff2_vertical" },
+			},
+		},
 	},
 
 	-- Grug-far (search & replace)

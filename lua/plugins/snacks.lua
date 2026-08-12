@@ -368,6 +368,7 @@ local spec = {
 		--   <leader>og                   mini.diff overlay (lua/plugins/mini.lua)
 		--   <leader>gd                   diffview working-tree (lua/plugins/editor.lua)
 		--   <leader>gv                   diffview toggle/conflict/range (lua/plugins/editor.lua)
+		--   <leader>gr/gR                diffview review vs base branch (lua/plugins/editor.lua)
 		-- Not installed: gitsigns (mini.diff owns gutter), neogit (lazygit owns TUI),
 		--                vim-fugitive (mini.git owns :Git).
 

@@ -171,6 +171,23 @@ end, {
 	desc = "Execute git-flow commands",
 })
 
+-- :DiffviewBase command
+--   :DiffviewBase [show]  → report the base ref for the current branch + how it was resolved
+--   :DiffviewBase set     → pick a base branch and cache it in branch.<name>.diffviewbase
+--   :DiffviewBase clear   → drop the cache and fall back to detection
+-- Consumed by <leader>gr / <leader>gR (lua/plugins/editor.lua).
+vim.api.nvim_create_user_command("DiffviewBase", function(opts)
+	require("utils.git-base").command(opts)
+end, {
+	nargs = "?",
+	complete = function(arg_lead)
+		return vim.tbl_filter(function(s)
+			return vim.startswith(s, arg_lead)
+		end, { "show", "set", "clear" })
+	end,
+	desc = "Show/set/clear the base branch used by Diffview branch review",
+})
+
 -- :KeymapAudit command
 --   :KeymapAudit         → readonly markdown scratch buffer with findings
 --   :KeymapAudit write   → also writes to .planning/phases/01-foundation/KEYMAP-BASELINE.md
