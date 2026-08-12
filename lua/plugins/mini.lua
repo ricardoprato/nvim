@@ -215,9 +215,9 @@ return {
 
 			require("mini.splitjoin").setup()
 			require("mini.surround").setup({
-				-- Relocate to `gs*` prefix so `s` stays free for flash.nvim (Phase 7
-				-- D-01). Default `s*` mappings forced a `timeoutlen` wait on every
-				-- flash trigger; `gsa/gsd/gsf/gsF/gsh/gsn/gsr` removes the aliasing.
+				-- Relocate to `gs*` so built-in `s` (substitute) keeps working: with
+				-- default `s*` mappings mini.surround maps `s` to <Nop>, and even
+				-- remapping it back would cost a `timeoutlen` wait on every press.
 				mappings = {
 					add = "gsa",
 					delete = "gsd",
