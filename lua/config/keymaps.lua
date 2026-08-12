@@ -154,6 +154,12 @@ else
 	map("t", "<C-l>", "<C-\\><C-n><C-w>l", { desc = "Move to right window (Terminal)" })
 end
 
+-- [[ Terminal Window Resize ]]
+map("t", "<C-Left>", "<C-\\><C-n><Cmd>vertical resize -2<CR>i", { desc = "Resize window narrower (Terminal)" })
+map("t", "<C-Right>", "<C-\\><C-n><Cmd>vertical resize +2<CR>i", { desc = "Resize window wider (Terminal)" })
+map("t", "<C-Down>", "<C-\\><C-n><Cmd>resize -2<CR>i", { desc = "Resize window shorter (Terminal)" })
+map("t", "<C-Up>", "<C-\\><C-n><Cmd>resize +2<CR>i", { desc = "Resize window taller (Terminal)" })
+
 -- :GitFlow command
 vim.api.nvim_create_user_command("GitFlow", function(opts)
 	require("utils.git-flow").command(opts)
