@@ -17,8 +17,25 @@ return {
 		{ "<leader>ar", "<cmd>ClaudeCode --resume<cr>", desc = "Resume Claude" },
 		{ "<leader>aC", "<cmd>ClaudeCode --continue<cr>", desc = "Continue Claude" },
 		{ "<leader>am", "<cmd>ClaudeCodeSelectModel<cr>", desc = "Select Claude model" },
-		{ "<leader>ab", "<cmd>ClaudeCodeAdd %<cr>", desc = "Add current buffer" },
-		{ "<leader>as", "<cmd>ClaudeCodeSend<cr>", mode = "v", desc = "Send to Claude" },
+		-- Diffview-aware wrappers: inside a Diffview view the buffer name is a
+		-- synthetic `diffview://` URI that claudecode rejects as unreadable, so
+		-- utils.claude-diff resolves the real path first. Outside Diffview these
+		-- fall straight through to the stock commands.
+		{
+			"<leader>ab",
+			function()
+				require("utils.claude-diff").add_buffer()
+			end,
+			desc = "Add current buffer",
+		},
+		{
+			"<leader>as",
+			function()
+				require("utils.claude-diff").send_visual()
+			end,
+			mode = "v",
+			desc = "Send to Claude",
+		},
 		{
 			"<leader>as",
 			"<cmd>ClaudeCodeTreeAdd<cr>",
