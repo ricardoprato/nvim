@@ -5,6 +5,8 @@ return {
 		lazy = false,
 		build = ":TSUpdate",
 		config = function()
+			local ts = require("nvim-treesitter")
+
 			local languages = {
 				"lua",
 				"vimdoc",
@@ -17,7 +19,6 @@ return {
 				"javascript",
 				"typescript",
 				"tsx",
-				"jsx",
 				"astro",
 				"bash",
 				"json",
@@ -31,33 +32,53 @@ return {
 				"regex",
 			}
 
-			-- Install missing parsers (async, but runs early thanks to lazy=false)
+			-- Install missing parsers (async, but runs early thanks to lazy=false).
+			--
+			-- `force` is mandatory: `install()` skips any language listed by
+			-- `config.get_installed()`, which unions the `parser/` and `queries/`
+			-- directories, and `queries/` holds a symlink for every language
+			-- nvim-treesitter knows about. Without `force` the call is a silent
+			-- no-op. Rebuilding nothing needlessly is still guaranteed because
+			-- `missing` already filtered on the real parser files.
 			local missing = vim.tbl_filter(function(lang)
 				return #vim.api.nvim_get_runtime_file("parser/" .. lang .. ".*", false) == 0
 			end, languages)
 			if #missing > 0 then
-				require("nvim-treesitter").install(missing)
+				ts.install(missing, { force = true })
 			end
 
-			-- Enable highlighting and auto-install missing parsers on FileType
+			local group = vim.api.nvim_create_augroup("treesitter-attach", { clear = true })
 			local installing = {}
+
+			-- Enable highlighting and auto-install missing parsers on FileType
 			vim.api.nvim_create_autocmd("FileType", {
+				group = group,
 				callback = function(ev)
-					local lang = vim.treesitter.language.get_lang(ev.match) or ev.match
 					if pcall(vim.treesitter.start, ev.buf) then
 						return
 					end
 					-- Parser not installed — install on-demand (once per lang per session)
+					local lang = vim.treesitter.language.get_lang(ev.match) or ev.match
 					if installing[lang] then
 						return
 					end
-					local available = require("nvim-treesitter").get_available()
-					if not vim.list_contains(available, lang) then
+					if not vim.list_contains(ts.get_available(), lang) then
 						return
 					end
 					installing[lang] = true
 					vim.notify("Installing treesitter parser: " .. lang, vim.log.levels.INFO)
-					require("nvim-treesitter").install(lang)
+					ts.install(lang, { force = true }):await(function(err)
+						-- Cleared either way so a failed download can be retried
+						installing[lang] = nil
+						if err then
+							return
+						end
+						vim.schedule(function()
+							if vim.api.nvim_buf_is_valid(ev.buf) then
+								pcall(vim.treesitter.start, ev.buf)
+							end
+						end)
+					end)
 				end,
 				desc = "Start tree-sitter highlighting (auto-install missing parsers)",
 			})
