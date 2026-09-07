@@ -235,8 +235,7 @@ end
 ---   pick    → always prompt for the base, bypassing (and refreshing) the cache
 function M.open(opts)
 	opts = opts or {}
-	if require("diffview.lib").get_current_view() then
-		vim.cmd("DiffviewClose")
+	if require("utils.diffview").close_if_open() then
 		return
 	end
 
