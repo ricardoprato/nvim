@@ -9,13 +9,21 @@
 --   Rj cookies jar           Ru auth config            RS stats
 --   Rx/RX clear globals / cached files                 Rg GraphQL schema
 -- Note the plugin remaps plain <CR> inside http buffers.
--- Only Rb/Ro are useful without an .http buffer open, so those two are the
--- lazy trigger (string form: lazy loads, then replays the key into kulala's
--- own mapping — no rhs duplicated here). Canonical list: kulala/config/keymaps.lua.
+-- Of those five globals only Rb/Ro/Rr do anything without an .http buffer
+-- open (Rs/Ra need requests to send), so those three are the lazy trigger and
+-- `ft` covers the rest. Canonical list: kulala/config/keymaps.lua.
 return {
 	"mistweaverco/kulala.nvim",
 	ft = { "http", "rest" },
-	keys = { "<leader>Rb", "<leader>Ro" },
+	-- No rhs: lazy creates a placeholder map, loads the plugin on press, then
+	-- replays the key into kulala's own mapping — nothing duplicated here. The
+	-- desc is only what which-key shows *before* the load; it repeats kulala's
+	-- own wording verbatim so the label doesn't shift once the plugin takes over.
+	keys = {
+		{ "<leader>Rb", desc = "Open scratchpad" },
+		{ "<leader>Ro", desc = "Open kulala" },
+		{ "<leader>Rr", desc = "Replay the last request" },
+	},
 	opts = {
 		-- Kulala curates ~20 keymaps and ft-scopes them; re-declaring that set
 		-- here would just drift from upstream.
