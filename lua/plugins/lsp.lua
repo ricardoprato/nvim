@@ -60,13 +60,16 @@ return {
 				automatic_installation = true,
 			})
 			require("mason-tool-installer").setup({
+				-- Solo herramientas con consumidor real (conform o dap).
+				-- Los LSP se instalan via mason-lspconfig, no aca.
 				ensure_installed = {
-					"stylua",                                          -- Lua
-					"black", "isort", "ruff", "mypy", "debugpy",       -- Python (ruff coexists, NOT replaces)
-					"prettier", "prettierd", "eslint_d",               -- JS/TS
-					"markdownlint-cli2",                               -- Markdown (closes CONCERNS.md gap)
-					"shellcheck", "shfmt",                             -- Shell
-					"taplo", "hadolint",                               -- TOML, Dockerfile
+					"stylua", -- Lua (conform)
+					"ruff", -- Python: organize_imports + format (conform)
+					"debugpy", -- Python: debugger (dap)
+					"prettierd", -- JS/TS/JSON/YAML/HTML/CSS/MD (conform)
+					"prettier", -- fallback de prettierd
+					"shfmt", -- sh/bash (conform)
+					"taplo", -- TOML (conform)
 				},
 				auto_update = true,
 			})
