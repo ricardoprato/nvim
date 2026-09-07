@@ -80,8 +80,16 @@ return {
 		vim.schedule(function()
 			local ai = require("mini.ai")
 			ai.setup({
+				-- Uppercase ids so the default "same character" textobjects stay
+				-- reachable. Captures come from nvim-treesitter-textobjects.
 				custom_textobjects = {
 					F = ai.gen_spec.treesitter({ a = "@function.outer", i = "@function.inner" }),
+					C = ai.gen_spec.treesitter({ a = "@class.outer", i = "@class.inner" }),
+					O = ai.gen_spec.treesitter({
+						a = { "@conditional.outer", "@loop.outer" },
+						i = { "@conditional.inner", "@loop.inner" },
+					}),
+					R = ai.gen_spec.treesitter({ a = "@return.outer", i = "@return.inner" }),
 				},
 				search_method = "cover",
 			})
