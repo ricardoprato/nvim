@@ -20,6 +20,7 @@ return {
 			{ "<leader>n", group = "Notes (Obsidian)" },
 			{ "<leader>o", group = "Other" },
 			{ "<leader>r", group = "Replace" },
+			{ "<leader>R", group = "REST (Kulala)" },
 			{ "<leader>s", group = "Session/Search" },
 			{ "<leader>t", group = "Terminal" },
 			{ "<leader>v", group = "Visits" },

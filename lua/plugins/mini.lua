@@ -10,7 +10,7 @@ return {
 	--   mini.diff overlay            <leader>og toggle MiniDiff.toggle_overlay()
 	-- Owned elsewhere:
 	--   <leader>gb/gB/gd/gl/gL/gs/gS/go/gO  Snacks pickers + gitbrowse (lua/plugins/snacks.lua)
-	--   <leader>gv/gr/gR                    diffview (lua/plugins/editor.lua)
+	--   <leader>gv/gr/gR                    diffview (lua/plugins/diffview.lua)
 	--   <leader>tg                          lazygit (lua/plugins/snacks.lua)
 	keys = {
 		-- Git (mini.git + mini.diff)

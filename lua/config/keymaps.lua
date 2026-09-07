@@ -175,7 +175,7 @@ end, {
 --   :DiffviewBase [show]  → report the base ref for the current branch + how it was resolved
 --   :DiffviewBase set     → pick a base branch and cache it in branch.<name>.diffviewbase
 --   :DiffviewBase clear   → drop the cache and fall back to detection
--- Consumed by <leader>gr / <leader>gR (lua/plugins/editor.lua).
+-- Consumed by <leader>gr / <leader>gR (lua/plugins/diffview.lua).
 vim.api.nvim_create_user_command("DiffviewBase", function(opts)
 	require("utils.git-base").command(opts)
 end, {
