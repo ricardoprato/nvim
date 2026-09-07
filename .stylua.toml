@@ -1,0 +1,12 @@
+# conform runs stylua on every save (lua/plugins/conform.lua), and with no config
+# file the result silently tracks whatever the installed stylua defaults to.
+# These are those defaults, pinned.
+#
+# collapse_simple_statement stays "Never" because that is what the tree already
+# looks like: measured across lua/, "Never" leaves 10 files needing a reformat,
+# while "FunctionOnly" needs 20, "ConditionalOnly" 21 and "Always" 23. Keeping
+# one-line `function() ... end` handlers would mean rewriting most of the config.
+column_width = 120
+indent_type = "Tabs"
+indent_width = 4
+collapse_simple_statement = "Never"
