@@ -65,6 +65,11 @@ return {
 			MiniIcons.tweak_lsp_kind()
 		end)
 
+		-- Tabline (replaces bufferline.nvim). Set up after mini.icons so buffer
+		-- labels get filetype icons. Shows listed buffers on a single tabpage and
+		-- native tabpage labels once more than one tabpage exists.
+		require("mini.tabline").setup()
+
 		require("mini.misc").setup()
 		MiniMisc.setup_auto_root({ ".odoo_lsp", ".git", "package.json", "pyproject.toml" })
 		MiniMisc.setup_restore_cursor()
