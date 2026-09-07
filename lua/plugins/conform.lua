@@ -1,12 +1,23 @@
+-- prettier chain: prettierd (daemon, arranque rapido) con fallback al prettier normal.
+-- `extra` permite sumar un ultimo recurso por filetype (ej: deno_fmt en proyectos Deno).
+local function prettier(extra)
+	local chain = { "prettierd", "prettier" }
+	if extra then
+		table.insert(chain, extra)
+	end
+	chain.stop_after_first = true
+	return chain
+end
+
 return {
 	"stevearc/conform.nvim",
-	event = "BufWritePost",
-	cmd = "ConformInfo",
+	event = "BufWritePre",
+	cmd = { "ConformInfo", "FormatToggle" },
 	keys = {
 		{
 			"<leader>lf",
 			function()
-				require("conform").format({ lsp_fallback = true })
+				require("conform").format({ async = true })
 			end,
 			mode = { "n", "x" },
 			desc = "Format",
@@ -26,26 +37,44 @@ return {
 		end, { desc = "Toggle autoformat (use ! for buffer-only)", bang = true })
 
 		require("conform").setup({
-			notify_on_error = false,
-			format_after_save = function(bufnr)
+			-- Fail fast: si un formatter revienta, quiero enterarme.
+			-- notify_no_formatters queda en false porque "este ft no tiene formatter"
+			-- es ruido, no un error.
+			notify_on_error = true,
+			notify_no_formatters = false,
+			-- Aplica al <leader>lf manual; el save lo pisa con lsp_format = "never".
+			default_format_opts = {
+				lsp_format = "fallback",
+			},
+			format_on_save = function(bufnr)
 				if vim.b[bufnr].disable_autoformat or vim.g.disable_autoformat then
 					return
 				end
 				return { timeout_ms = 2000, lsp_format = "never" }
 			end,
-			formatters = {
-				black = { prepend_args = { "--fast" } },
-			},
 			formatters_by_ft = {
 				lua = { "stylua" },
-				python = { "isort", "black" },
-				javascript = { "prettier", "deno_fmt", stop_after_first = true },
-				typescript = { "prettier", "deno_fmt", stop_after_first = true },
-				javascriptreact = { "prettier", "deno_fmt", stop_after_first = true },
-				typescriptreact = { "prettier", "deno_fmt", stop_after_first = true },
-				json = { "prettier", "deno_fmt", stop_after_first = true },
-				yaml = { "prettier" },
-				xml = { "xmlformatter" },
+				python = { "ruff_organize_imports", "ruff_format" },
+
+				javascript = prettier("deno_fmt"),
+				typescript = prettier("deno_fmt"),
+				javascriptreact = prettier("deno_fmt"),
+				typescriptreact = prettier("deno_fmt"),
+				json = prettier("deno_fmt"),
+				jsonc = prettier("deno_fmt"),
+				yaml = prettier(),
+				html = prettier(),
+				css = prettier(),
+				scss = prettier(),
+				-- injected formatea los bloques de codigo embebidos en el markdown.
+				markdown = { "prettierd", "injected" },
+
+				sh = { "shfmt" },
+				bash = { "shfmt" },
+				toml = { "taplo" },
+
+				-- Filetypes sin formatter propio.
+				["_"] = { "trim_whitespace" },
 			},
 		})
 		vim.o.formatexpr = "v:lua.require'conform'.formatexpr()"
