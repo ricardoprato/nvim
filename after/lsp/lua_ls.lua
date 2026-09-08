@@ -10,14 +10,11 @@
 --
 -- This config is designed for Lua's activity around Neovim. It provides only
 -- basic config and can be further improved.
+--
+-- No `on_attach` here on purpose: completion is blink.cmp (lua/plugins/blink.lua),
+-- so the server's own trigger characters are left untouched. Trimming them drops
+-- the quote and slash triggers that drive `require("...")` path completion.
 return {
-	on_attach = function(client, buf_id)
-		-- Reduce very long list of triggers for better 'mini.completion' experience
-		client.server_capabilities.completionProvider.triggerCharacters = { ".", ":", "#", "(" }
-
-		-- Use this function to define buffer-local mappings and behavior that depend
-		-- on attached client or only makes sense if there is language server attached.
-	end,
 	-- LuaLS Structure of these settings comes from LuaLS, not Neovim
 	settings = {
 		Lua = {
@@ -26,6 +23,9 @@ return {
 			workspace = {
 				-- Don't analyze code from submodules
 				ignoreSubmodules = true,
+				-- lazydev owns workspace.library, so suppress the "configure your
+				-- environment as luv?" prompt and the .luarc.json it would write.
+				checkThirdParty = false,
 			},
 		},
 	},

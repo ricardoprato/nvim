@@ -10,7 +10,11 @@ return {
 			snippets = { preset = "mini_snippets" },
 			fuzzy = { implementation = "rust" },
 			sources = {
-				default = { "lazydev", "lsp", "path", "snippets", "buffer" },
+				default = { "lsp", "path", "snippets", "buffer" },
+				-- lazydev.nvim is `ft = "lua"`, so its blink module is only on the
+				-- rtp in Lua buffers. Scoping the source keeps every other filetype
+				-- from resolving a provider that is not loaded there.
+				per_filetype = { lua = { inherit_defaults = true, "lazydev" } },
 				providers = {
 					lazydev = {
 						name = "LazyDev",
