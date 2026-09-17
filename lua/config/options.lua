@@ -19,7 +19,7 @@
 vim.g.mapleader   = ' '                              -- Use `<Space>` as <Leader> key
 
 vim.o.mouse       = 'a'                              -- Enable mouse
-vim.o.mousescroll = 'ver:25,hor:6'                   -- Customize mouse scroll
+vim.o.mousescroll = 'ver:1,hor:6'                    -- One line per wheel notch: terminal event rate drives the scroll
 vim.o.switchbuf   = 'usetab,uselast'                 -- Use already opened buffers when switching
 vim.o.autoread    = true                             -- Reload files changed outside Neovim
 vim.o.undofile    = true                             -- Enable persistent undo
