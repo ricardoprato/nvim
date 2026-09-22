@@ -2,6 +2,10 @@ return {
 	{
 		"nvim-treesitter/nvim-treesitter",
 		branch = "main",
+		-- Eager: everything below lives in `config` — the parser install and the
+		-- FileType callback that attaches them. A lazy trigger would register that
+		-- autocmd after the FileType event that should have fired it, so the first
+		-- buffer of a session would open unhighlighted and unfolded.
 		lazy = false,
 		build = ":TSUpdate",
 		config = function()
@@ -89,10 +93,22 @@ return {
 			local group = vim.api.nvim_create_augroup("treesitter-attach", { clear = true })
 			local installing = {}
 
+			-- Filetypes whose bundled Vim syntax beats the tree-sitter queries.
+			-- $VIMRUNTIME/syntax/csv.vim paints every column its own colour through
+			-- csvCol1..csvCol8, while the csv/tsv highlights.scm only tags the
+			-- separator. `vim.treesitter.start` turns regex syntax off, so letting a
+			-- parser attach here is a strict downgrade -- and skipping the callback
+			-- outright also stops the on-demand installer from fetching it.
+			local syntax_wins = { csv = true, tsv = true }
+
 			-- Enable highlighting and auto-install missing parsers on FileType
 			vim.api.nvim_create_autocmd("FileType", {
 				group = group,
 				callback = function(ev)
+					if syntax_wins[ev.match] then
+						set_folds(ev.buf, "indent")
+						return
+					end
 					if pcall(vim.treesitter.start, ev.buf) then
 						on_parser_active(ev.buf)
 						return
@@ -108,10 +124,26 @@ return {
 					end
 					installing[lang] = true
 					vim.notify("Installing treesitter parser: " .. lang, vim.log.levels.INFO)
-					ts.install(lang, { force = true }):await(function(err)
+					ts.install(lang, { force = true }):await(function(err, ok)
 						-- Cleared either way so a failed download can be retried
 						installing[lang] = nil
-						if err then
+						-- `install()` reports a failed download by returning false
+						-- (install.lua:541, `done == #tasks`); `err` is only set for a
+						-- raised Lua error, so checking it alone stays silent for the
+						-- case that actually happens — no tree-sitter CLI, no compiler,
+						-- no network — after the INFO above promised an install.
+						--
+						-- The notify is scheduled because install() only calls
+						-- `a.schedule()` for `#languages > 1` (install.lua:531), so this
+						-- single-language callback can resume inside a libuv callback,
+						-- where nvim_echo raises E5560.
+						if err or not ok then
+							vim.schedule(function()
+								vim.notify(
+									("Failed to install treesitter parser: %s"):format(lang),
+									vim.log.levels.WARN
+								)
+							end)
 							return
 						end
 						vim.schedule(function()
