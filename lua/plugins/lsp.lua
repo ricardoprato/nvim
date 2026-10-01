@@ -30,6 +30,9 @@ return {
 				"gdscript",
 				"rust_analyzer",
 				"tailwindcss",
+				-- Only attaches under a .sln/.csproj: in Unity those exist after
+				-- "Regenerate project files" (Preferences > External Tools).
+				"roslyn_ls",
 			})
 
 			vim.api.nvim_create_autocmd("LspAttach", {
@@ -66,6 +69,7 @@ return {
 					-- Mason's binary wins because mason prepends its bin to PATH.
 					"rust_analyzer",
 					"tailwindcss",
+					"roslyn_ls",
 				},
 				automatic_installation = true,
 			})
@@ -82,6 +86,7 @@ return {
 					"taplo", -- TOML (conform)
 					"codelldb", -- Rust: debugger (dap)
 					"js-debug-adapter", -- JS/TS: Node and Chrome debugger (dap)
+					"csharpier", -- C# (conform)
 				},
 				auto_update = true,
 			})

@@ -75,6 +75,7 @@ return {
 				-- rustfmt ships with the toolchain, so it reads the project's
 				-- rustfmt.toml and edition from Cargo.toml like `cargo fmt` does.
 				rust = { "rustfmt" },
+				cs = { "csharpier" },
 
 				-- Filetypes sin formatter propio.
 				["_"] = { "trim_whitespace" },

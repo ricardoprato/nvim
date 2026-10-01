@@ -38,6 +38,7 @@ return {
 				"godot_resource",
 				"gdshader",
 				"rust",
+				"c_sharp",
 			}
 
 			-- Install missing parsers (async, but runs early thanks to lazy=false).
