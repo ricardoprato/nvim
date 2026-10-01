@@ -79,6 +79,7 @@ return {
 					"shfmt", -- sh/bash (conform)
 					"taplo", -- TOML (conform)
 					"codelldb", -- Rust: debugger (dap)
+					"js-debug-adapter", -- JS/TS: Node and Chrome debugger (dap)
 				},
 				auto_update = true,
 			})

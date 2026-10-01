@@ -275,6 +275,52 @@ return {
 			},
 		}
 
+		-- js-debug only runs as a DAP server on a port, so nvim-dap spawns it
+		-- and connects. Both adapter types share the same server. The host is passed
+		-- explicitly because js-debug binds to ::1 by default, which a 127.0.0.1
+		-- client never reaches.
+		local js_debug = {
+			type = "server",
+			host = "127.0.0.1",
+			port = "${port}",
+			executable = { command = mason_bin .. "js-debug-adapter", args = { "${port}", "127.0.0.1" } },
+		}
+		dap.adapters["pwa-node"] = js_debug
+		dap.adapters["pwa-chrome"] = js_debug
+		-- VS Code launch.json files name these types `node` and `chrome`; alias
+		-- them so the launch.json provider below can run those configs as is.
+		dap.adapters.node = js_debug
+		dap.adapters.chrome = js_debug
+
+		local js_configs = {
+			{
+				type = "pwa-node",
+				request = "launch",
+				name = "Launch current file (Node)",
+				program = "${file}",
+				cwd = "${workspaceFolder}",
+			},
+			{
+				-- Electron main process: start it with `electron --inspect=9229 .`
+				type = "pwa-node",
+				request = "attach",
+				name = "Attach to Node/Electron main (9229)",
+				port = 9229,
+				cwd = "${workspaceFolder}",
+			},
+			{
+				-- Electron renderer or a browser: start it with --remote-debugging-port=9222
+				type = "pwa-chrome",
+				request = "attach",
+				name = "Attach to Chrome/Electron renderer (9222)",
+				port = 9222,
+				webRoot = "${workspaceFolder}",
+			},
+		}
+		for _, ft in ipairs({ "javascript", "typescript", "javascriptreact", "typescriptreact" }) do
+			dap.configurations[ft] = js_configs
+		end
+
 		-- El provider built-in solo mira ./.vscode/launch.json en el cwd.
 		-- Este busca hacia arriba desde el archivo del buffer.
 		local vscode = require("dap.ext.vscode")
