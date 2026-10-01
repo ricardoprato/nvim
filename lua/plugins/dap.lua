@@ -274,6 +274,19 @@ return {
 				cwd = "${workspaceFolder}",
 			},
 		}
+		dap.configurations.cpp = {
+			{
+				type = "codelldb",
+				request = "launch",
+				name = "Launch executable",
+				-- Unreal editor builds land in Binaries/Linux/<Project>Editor.
+				program = function()
+					return vim.fn.input("Executable: ", vim.fn.getcwd() .. "/", "file")
+				end,
+				cwd = "${workspaceFolder}",
+			},
+		}
+		dap.configurations.c = dap.configurations.cpp
 
 		-- js-debug only runs as a DAP server on a port, so nvim-dap spawns it
 		-- and connects. Both adapter types share the same server. The host is passed

@@ -39,6 +39,8 @@ return {
 				"gdshader",
 				"rust",
 				"c_sharp",
+				"c",
+				"cpp",
 			}
 
 			-- Install missing parsers (async, but runs early thanks to lazy=false).

@@ -33,6 +33,10 @@ return {
 				-- Only attaches under a .sln/.csproj: in Unity those exist after
 				-- "Regenerate project files" (Preferences > External Tools).
 				"roslyn_ls",
+				-- Uses the system clangd (pacman), not Mason, so it matches the clang
+				-- toolchain that builds the code. Unreal needs a compile_commands.json at
+				-- the project root: UnrealBuildTool -mode=GenerateClangDatabase.
+				"clangd",
 			})
 
 			vim.api.nvim_create_autocmd("LspAttach", {

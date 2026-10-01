@@ -76,6 +76,9 @@ return {
 				-- rustfmt.toml and edition from Cargo.toml like `cargo fmt` does.
 				rust = { "rustfmt" },
 				cs = { "csharpier" },
+				-- System clang-format; it picks up the project's .clang-format.
+				c = { "clang-format" },
+				cpp = { "clang-format" },
 
 				-- Filetypes sin formatter propio.
 				["_"] = { "trim_whitespace" },
