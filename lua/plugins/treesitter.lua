@@ -34,6 +34,9 @@ return {
 				"query",
 				"http",
 				"regex",
+				"gdscript",
+				"godot_resource",
+				"gdshader",
 			}
 
 			-- Install missing parsers (async, but runs early thanks to lazy=false).

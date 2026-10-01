@@ -24,6 +24,10 @@ return {
 				"yamlls",
 				"lemminx",
 				"astro",
+				-- Not installed through Mason: the Godot editor itself serves the
+				-- language server over TCP (127.0.0.1:6005), so it only attaches while
+				-- the project is open in Godot.
+				"gdscript",
 			})
 
 			vim.api.nvim_create_autocmd("LspAttach", {

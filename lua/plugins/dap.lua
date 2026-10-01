@@ -250,6 +250,14 @@ return {
 		local debugpy_path = vim.fn.stdpath("data") .. "/mason/packages/debugpy/venv/bin/python"
 		require("dap-python").setup(debugpy_path)
 
+		-- Like its language server, Godot hosts the debug adapter inside the
+		-- editor (Editor Settings > Network > Debug Adapter, port 6006), so there
+		-- is no executable to launch: nvim-dap only connects to the running editor.
+		dap.adapters.godot = { type = "server", host = "127.0.0.1", port = 6006 }
+		dap.configurations.gdscript = {
+			{ type = "godot", request = "launch", name = "Launch Godot scene", project = "${workspaceFolder}" },
+		}
+
 		-- El provider built-in solo mira ./.vscode/launch.json en el cwd.
 		-- Este busca hacia arriba desde el archivo del buffer.
 		local vscode = require("dap.ext.vscode")
