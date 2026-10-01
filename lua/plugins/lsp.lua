@@ -28,6 +28,7 @@ return {
 				-- language server over TCP (127.0.0.1:6005), so it only attaches while
 				-- the project is open in Godot.
 				"gdscript",
+				"rust_analyzer",
 			})
 
 			vim.api.nvim_create_autocmd("LspAttach", {
@@ -60,6 +61,9 @@ return {
 					"yamlls",
 					"lemminx",
 					"astro",
+					-- rustup's rust-analyzer component is not part of the toolchain here;
+					-- Mason's binary wins because mason prepends its bin to PATH.
+					"rust_analyzer",
 				},
 				automatic_installation = true,
 			})
@@ -74,6 +78,7 @@ return {
 					"prettier", -- fallback de prettierd
 					"shfmt", -- sh/bash (conform)
 					"taplo", -- TOML (conform)
+					"codelldb", -- Rust: debugger (dap)
 				},
 				auto_update = true,
 			})

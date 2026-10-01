@@ -258,6 +258,23 @@ return {
 			{ type = "godot", request = "launch", name = "Launch Godot scene", project = "${workspaceFolder}" },
 		}
 
+		local mason_bin = vim.fn.stdpath("data") .. "/mason/bin/"
+
+		dap.adapters.codelldb = { type = "executable", command = mason_bin .. "codelldb" }
+		dap.configurations.rust = {
+			{
+				type = "codelldb",
+				request = "launch",
+				name = "Launch Cargo binary",
+				-- codelldb debugs a built binary, it does not run `cargo build`:
+				-- build first, then pick the executable under target/debug.
+				program = function()
+					return vim.fn.input("Executable: ", vim.fn.getcwd() .. "/target/debug/", "file")
+				end,
+				cwd = "${workspaceFolder}",
+			},
+		}
+
 		-- El provider built-in solo mira ./.vscode/launch.json en el cwd.
 		-- Este busca hacia arriba desde el archivo del buffer.
 		local vscode = require("dap.ext.vscode")

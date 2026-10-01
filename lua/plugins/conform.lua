@@ -72,6 +72,9 @@ return {
 				sh = { "shfmt" },
 				bash = { "shfmt" },
 				toml = { "taplo" },
+				-- rustfmt ships with the toolchain, so it reads the project's
+				-- rustfmt.toml and edition from Cargo.toml like `cargo fmt` does.
+				rust = { "rustfmt" },
 
 				-- Filetypes sin formatter propio.
 				["_"] = { "trim_whitespace" },
