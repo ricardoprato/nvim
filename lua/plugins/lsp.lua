@@ -29,6 +29,7 @@ return {
 				-- the project is open in Godot.
 				"gdscript",
 				"rust_analyzer",
+				"tailwindcss",
 			})
 
 			vim.api.nvim_create_autocmd("LspAttach", {
@@ -64,6 +65,7 @@ return {
 					-- rustup's rust-analyzer component is not part of the toolchain here;
 					-- Mason's binary wins because mason prepends its bin to PATH.
 					"rust_analyzer",
+					"tailwindcss",
 				},
 				automatic_installation = true,
 			})
