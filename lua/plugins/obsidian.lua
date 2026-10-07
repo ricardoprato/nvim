@@ -38,10 +38,9 @@ return {
 	cmd = "Obsidian",
 	keys = {
 		-- Daily & weekly
-		{ "<leader>nd", "<Cmd>Obsidian today<CR>", desc = "Work daily (today)" },
-		-- workdays_only is on (see opts), so these two skip the weekend.
-		{ "<leader>ny", "<Cmd>Obsidian yesterday<CR>", desc = "Yesterday (workday)" },
-		{ "<leader>nm", "<Cmd>Obsidian tomorrow<CR>", desc = "Tomorrow (workday)" },
+		{ "<leader>nd", "<Cmd>Obsidian today<CR>", desc = "Daily (today)" },
+		{ "<leader>ny", "<Cmd>Obsidian yesterday<CR>", desc = "Daily (yesterday)" },
+		{ "<leader>nm", "<Cmd>Obsidian tomorrow<CR>", desc = "Daily (tomorrow)" },
 		-- Journal-first review: the dailies are the only entry point, so the
 		-- weekly pass over them is what promotes recurring themes to topic notes.
 		{ "<leader>nr", "<Cmd>Obsidian dailies -7 0<CR>", desc = "Review last week's dailies" },
@@ -110,12 +109,14 @@ return {
 		legacy_commands = false,
 
 		daily_notes = {
-			folder = "work/daily",
-			template = "work-daily",
-			default_tags = { "daily", "work" },
-			-- Upstream's default, pinned here because it drives <leader>ny/nm:
-			-- these are work dailies, so Monday's "yesterday" is Friday.
-			workdays_only = true,
+			-- One daily for everything, work or not: it is the journal-first entry
+			-- point, so it lives at the vault root rather than under work/.
+			folder = "daily",
+			template = "daily",
+			default_tags = { "daily" },
+			-- Upstream defaults to true, which made Monday's "yesterday" Friday.
+			-- Weekend dailies exist now, so <leader>ny/nm must not skip them.
+			workdays_only = false,
 		},
 
 		templates = { folder = "templates" },
