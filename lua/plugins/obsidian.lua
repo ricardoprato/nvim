@@ -7,6 +7,29 @@
 -- a one-line change instead of four.
 local VAULT = vim.fn.expand("~/obsidian")
 
+-- new_from_template writes the note and stops there: "The caller decides
+-- whether to open the note; this function never opens it." Creating the note
+-- from the template (instead of :Obsidian template into an existing note) also
+-- avoids a second frontmatter block, which the insert path leaves behind.
+---@param id string        vault-relative note id, "<folder>/<title>"
+---@param template string
+local function new_note(id, template)
+	require("obsidian.actions").new_from_template(id, template, function(note)
+		note:open({ sync = true })
+	end)
+end
+
+---Prompt for a title and create the note under a fixed folder + template.
+---@param prompt string
+---@param folder string vault-relative folder the note lands in
+---@param template string
+local function capture(prompt, folder, template)
+	local title = vim.fn.input(prompt .. ": ")
+	if title ~= "" then
+		new_note(folder .. "/" .. title, template)
+	end
+end
+
 return {
 	"obsidian-nvim/obsidian.nvim",
 	event = {
@@ -39,14 +62,34 @@ return {
 				if vim.fn.filereadable(path) == 1 then
 					vim.cmd("edit " .. vim.fn.fnameescape(path))
 				else
-					-- new_from_template writes the note and stops there: "The caller
-					-- decides whether to open the note; this function never opens it."
-					require("obsidian.actions").new_from_template(rel, "personal-weekly", function(note)
-						note:open({ sync = true })
-					end)
+					new_note(rel, "personal-weekly")
 				end
 			end,
 			desc = "Personal weekly",
+		},
+
+		-- Tracked collections: one note per item, listed by the Bases in
+		-- topics/media.md and topics/ideas.md through their tag, not their folder.
+		{
+			"<leader>nv",
+			function()
+				capture("Serie/película", "media", "media")
+			end,
+			desc = "New series/movie",
+		},
+		{
+			"<leader>ni",
+			function()
+				capture("Idea", "ideas", "idea")
+			end,
+			desc = "New idea (game/content)",
+		},
+		{
+			"<leader>nh",
+			function()
+				vim.cmd.edit(VAULT .. "/home.md")
+			end,
+			desc = "Vault home",
 		},
 
 		-- Search & navigation
