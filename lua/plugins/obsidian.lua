@@ -136,6 +136,12 @@ return {
 
 		attachments = { folder = "assets" },
 
+		-- render-markdown.nvim owns rendering. obsidian.nvim only skips its own
+		-- UI when a renderer is already loaded at workspace setup, but it loads
+		-- on BufReadPre, before render-markdown's ft=markdown trigger, so both
+		-- drew checkboxes: the stacked conceals ate the first letters of a task.
+		ui = { enable = false },
+
 		-- Notes created without an explicit folder (<leader>nn, <CR> on a link to
 		-- a missing note, <leader>nL) are journal-first topic notes: permanent
 		-- hubs whose value is their backlinks. They go to topics/, not inbox/,
