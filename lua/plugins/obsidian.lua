@@ -49,23 +49,6 @@ return {
 			desc = "Personal weekly",
 		},
 
-
-		-- Snippet search
-		{
-			"<leader>nf",
-			function()
-				require("utils.obsidian-snippets").find_and_yank()
-			end,
-			desc = "Find snippet (yank code)",
-		},
-		{
-			"<leader>nF",
-			function()
-				require("utils.obsidian-snippets").search()
-			end,
-			desc = "Search snippets (grep)",
-		},
-
 		-- Search & navigation
 		{ "<leader>ns", "<Cmd>Obsidian search<CR>", desc = "Search" },
 		{ "<leader>nb", "<Cmd>Obsidian backlinks<CR>", desc = "Backlinks" },
