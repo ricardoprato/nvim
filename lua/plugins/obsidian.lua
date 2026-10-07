@@ -7,28 +7,6 @@
 -- a one-line change instead of four.
 local VAULT = vim.fn.expand("~/obsidian")
 
--- obsidian.actions.new_from_template writes the note to disk and stops there —
--- "The caller decides whether to open the note; this function never opens it."
--- Every note-creating keymap below goes through new_note so the open callback
--- lives in exactly one place.
-
----@param id string        vault-relative note id, "<folder>/<title>"
----@param template string? nil creates a templateless note (frontmatter only)
-local function new_note(id, template)
-	local actions = require("obsidian.actions")
-	local open = function(note)
-		note:open({ sync = true })
-	end
-	-- new_from_template with a nil template creates nothing: it opens the template
-	-- picker. A templateless capture goes through actions.new, which applies
-	-- opts.note.template (the plugin's frontmatter-only default).
-	if template then
-		actions.new_from_template(id, template, open)
-	else
-		actions.new(id, open)
-	end
-end
-
 return {
 	"obsidian-nvim/obsidian.nvim",
 	event = {
@@ -61,23 +39,16 @@ return {
 				if vim.fn.filereadable(path) == 1 then
 					vim.cmd("edit " .. vim.fn.fnameescape(path))
 				else
-					new_note(rel, "personal-weekly")
+					-- new_from_template writes the note and stops there: "The caller
+					-- decides whether to open the note; this function never opens it."
+					require("obsidian.actions").new_from_template(rel, "personal-weekly", function(note)
+						note:open({ sync = true })
+					end)
 				end
 			end,
 			desc = "Personal weekly",
 		},
 
-		-- Templateless on purpose: an inbox capture is a title and a body.
-		{
-			"<leader>nc",
-			function()
-				local title = vim.fn.input("Capture: ")
-				if title ~= "" then
-					new_note("inbox/" .. title, nil)
-				end
-			end,
-			desc = "Quick capture (inbox)",
-		},
 
 		-- Snippet search
 		{
@@ -150,9 +121,8 @@ return {
 
 		-- Notes created without an explicit folder (<leader>nn, <CR> on a link to
 		-- a missing note, <leader>nL) are journal-first topic notes: permanent
-		-- hubs whose value is their backlinks. They go to topics/, not inbox/,
-		-- because inbox/ means "unprocessed" and a topic is never processed away.
-		-- The <leader>n captures pass "<folder>/<title>" and bypass this.
+		-- hubs whose value is their backlinks. There is no inbox: unsorted
+		-- captures go in the daily, so topics/ only ever holds topics.
 		new_notes_location = "notes_subdir",
 		notes_subdir = "topics",
 	},
