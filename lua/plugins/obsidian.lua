@@ -69,7 +69,7 @@ return {
 		},
 
 		-- Tracked collections: one note per item, listed by the Bases in
-		-- topics/media.md and topics/ideas.md through their tag, not their folder.
+		-- media.md and ideas.md at the vault root, not by browsing the folders.
 		{
 			"<leader>nv",
 			function()
