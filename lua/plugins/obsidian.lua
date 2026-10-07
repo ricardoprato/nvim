@@ -7,27 +7,23 @@
 -- a one-line change instead of four.
 local VAULT = vim.fn.expand("~/obsidian")
 
--- new_from_template writes the note and stops there: "The caller decides
--- whether to open the note; this function never opens it." Creating the note
--- from the template (instead of :Obsidian template into an existing note) also
--- avoids a second frontmatter block, which the insert path leaves behind.
----@param id string        vault-relative note id, "<folder>/<title>"
----@param template string
-local function new_note(id, template)
-	require("obsidian.actions").new_from_template(id, template, function(note)
-		note:open({ sync = true })
-	end)
-end
-
 ---Prompt for a title and create the note under a fixed folder + template.
 ---@param prompt string
 ---@param folder string vault-relative folder the note lands in
 ---@param template string
 local function capture(prompt, folder, template)
 	local title = vim.fn.input(prompt .. ": ")
-	if title ~= "" then
-		new_note(folder .. "/" .. title, template)
+	if title == "" then
+		return
 	end
+	-- new_from_template writes the note and stops there: "The caller decides
+	-- whether to open the note; this function never opens it." Creating the
+	-- note from the template (instead of :Obsidian template into an existing
+	-- note) also avoids a second frontmatter block, which the insert path
+	-- leaves behind.
+	require("obsidian.actions").new_from_template(folder .. "/" .. title, template, function(note)
+		note:open({ sync = true })
+	end)
 end
 
 return {
@@ -51,21 +47,24 @@ return {
 		{ "<leader>nL", ":Obsidian link_new<CR>", mode = "x", desc = "Link selection to new topic" },
 		{ "<leader>nl", ":Obsidian link<CR>", mode = "x", desc = "Link selection to existing note" },
 		{ "<leader>nq", "<Cmd>Obsidian quick_switch<CR>", desc = "Quick switch note" },
+
+		-- Knowledge worth rereading grows out of a daily: extract the selection
+		-- into notes/ instead of topics/, which only holds backlink hubs.
+		-- The action, not :Obsidian extract_note: the command takes at most one
+		-- argument, so a title with spaces is rejected. The label is the note id,
+		-- so a "notes/" prefix picks the folder. <Esc> first sets the '< '> marks
+		-- the action reads once visual mode is gone.
 		{
-			"<leader>nw",
+			"<leader>ne",
 			function()
-				-- ISO week (%G-W%V, not %Y-W%W): personal-weekly.md stamps
-				-- `week: {{date:WW}}` in its frontmatter, and moment's WW is
-				-- the ISO week — %W would disagree with it by one most years.
-				local rel = "personal/" .. os.date("%G-W%V")
-				local path = VAULT .. "/" .. rel .. ".md"
-				if vim.fn.filereadable(path) == 1 then
-					vim.cmd("edit " .. vim.fn.fnameescape(path))
-				else
-					new_note(rel, "personal-weekly")
+				vim.cmd("normal! " .. vim.keycode("<Esc>"))
+				local title = vim.fn.input("Note: ")
+				if title ~= "" then
+					require("obsidian.actions").extract_note("notes/" .. title)
 				end
 			end,
-			desc = "Personal weekly",
+			mode = "x",
+			desc = "Extract selection to note",
 		},
 
 		-- Tracked collections: one note per item, listed by the Bases in
