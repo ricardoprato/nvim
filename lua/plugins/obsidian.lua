@@ -142,6 +142,11 @@ return {
 		-- drew checkboxes: the stacked conceals ate the first letters of a task.
 		ui = { enable = false },
 
+		-- Unset, obsidian.nvim auto-detects in the order telescope, fzf-lua,
+		-- mini.pick, snacks — and mini.nvim is installed for its other modules,
+		-- so search and backlinks opened in mini.pick instead of snacks.
+		picker = { name = "snacks.picker" },
+
 		-- Notes created without an explicit folder (<leader>nn, <CR> on a link to
 		-- a missing note, <leader>nL) are journal-first topic notes: permanent
 		-- hubs whose value is their backlinks. They go to topics/, not inbox/,
