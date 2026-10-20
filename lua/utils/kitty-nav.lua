@@ -1,16 +1,12 @@
 local M = {}
 
-local direction_map = {
-	h = { wincmd = "h", kitty = "left" },
-	j = { wincmd = "j", kitty = "bottom" },
-	k = { wincmd = "k", kitty = "top" },
-	l = { wincmd = "l", kitty = "right" },
-}
-
+-- Direction key -> side name, shared by kitty's kitten and snacks picker positions.
 local dir_to_position = { h = "left", j = "bottom", k = "top", l = "right" }
 local exit_dir_for_position = { left = "l", right = "h", top = "j", bottom = "k" }
 
 local function active_pickers()
+	-- snacks is optional: without it there are no pickers to route to, so
+	-- navigation falls back to plain windows.
 	local ok, picker = pcall(require, "snacks.picker")
 	if not ok then
 		return {}
@@ -105,10 +101,28 @@ local function find_window_in_direction(dir, from_win, opts)
 	return best
 end
 
+-- Edge fallback: no nvim window in that direction. Inside tmux the neighbor is
+-- a tmux pane (kitty only sees one window); otherwise ask kitty to move focus.
+local tmux_dirs = { h = "-L", j = "-D", k = "-U", l = "-R" }
+local function escape_to_outer(dir)
+	local cmd
+	if vim.env.TMUX then
+		cmd = { "tmux", "select-pane", tmux_dirs[dir] }
+	else
+		cmd = { "kitty", "@", "kitten", "kittens/navigate_kitty.py", dir_to_position[dir] }
+	end
+	local ok, result = pcall(function()
+		return vim.system(cmd, { text = true }):wait()
+	end)
+	if not ok or result.code ~= 0 then
+		local reason = ok and vim.trim(result.stderr or "") or tostring(result)
+		vim.notify(("kitty-nav: %s failed: %s"):format(cmd[1], reason), vim.log.levels.WARN)
+	end
+end
+
 function M.navigate(dir)
-	local info = direction_map[dir]
-	if not info then
-		return
+	if not dir_to_position[dir] then
+		error(("kitty-nav: invalid direction %q (expected h, j, k or l)"):format(tostring(dir)))
 	end
 
 	local cur_win = vim.api.nvim_get_current_win()
@@ -132,7 +146,7 @@ function M.navigate(dir)
 		end
 
 		-- Truly modal floats with nothing in that direction: jump to kitty pane.
-		vim.fn.system({ "kitty", "@", "kitten", "kittens/navigate_kitty.py", info.kitty })
+		escape_to_outer(dir)
 		return
 	end
 
@@ -151,7 +165,7 @@ function M.navigate(dir)
 			vim.api.nvim_set_current_win(target)
 			return
 		end
-		vim.fn.system({ "kitty", "@", "kitten", "kittens/navigate_kitty.py", info.kitty })
+		escape_to_outer(dir)
 	end
 end
 
