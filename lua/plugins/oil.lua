@@ -36,6 +36,9 @@ return {
 		-- (actions.cd), which use_default_keymaps keeps active.
 		{ "-", function() require("oil").open_float() end, desc = "Oil float (file dir)" },
 		{ "_", function() require("oil").open_float(vim.fn.getcwd()) end, desc = "Oil float (cwd)" },
+		-- auto_root narrows cwd to the client repo, so `_` never reaches the
+		-- launch dir (~/odoo/<ver>) that holds the other repos of the workspace.
+		{ "<leader>ew", function() require("oil").open_float(_G.Config.initial_cwd) end, desc = "Oil float (workspace)" },
 		-- Trash view: `:Oil --trash` (infrequent op, no keymap to keep <leader>o namespace clean)
 	},
 }

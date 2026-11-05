@@ -64,7 +64,7 @@ nmap_leader("ba", "<Cmd>b#<CR>", "Alternate")
 nmap_leader("bs", new_scratch_buffer, "Scratch")
 
 -- e is for 'Explore' and 'Edit'
--- NOTE: <Leader>ed, ef, en, eo are now in snacks.lua
+-- NOTE: <Leader>en is in snacks.lua and <Leader>ew in oil.lua
 local explore_quickfix = function()
 	for _, win_id in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
 		if vim.fn.getwininfo(win_id)[1].quickfix == 1 then

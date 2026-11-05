@@ -78,6 +78,17 @@ local project_patterns = { ".odoo_lsp", ".git", "package.json", "pyproject.toml"
 -- one of the patterns above.
 local project_max_depth = 4
 
+-- Root of the Odoo addon that owns the current buffer, or nil after warning:
+-- outside an addon there is no sensible scope, and silently widening to the
+-- repo would hide that the keymap did not do what it says.
+local function odoo_addon_root()
+	local root = vim.fs.root(0, "__manifest__.py")
+	if not root then
+		vim.notify("Current buffer is not inside an Odoo addon (no __manifest__.py)", vim.log.levels.WARN)
+	end
+	return root
+end
+
 -- Builders, not constants: each call hands the picker a table of its own, so
 -- whatever snacks does to `opts` cannot leak into the next invocation.
 --
@@ -172,8 +183,7 @@ local spec = {
 		-- snacks.notifier has no free `position` knob; X is always right-edge.
 		notifier = { enabled = true, top_down = false },
 		picker = { enabled = true },
-		-- explorer disabled: mini.files owns the file-tree surface (lua/plugins/mini.lua).
-		-- Keymaps <leader>ed / <leader>ef moved there.
+		-- explorer disabled: oil owns the file-explorer surface (lua/plugins/oil.lua).
 		explorer = { enabled = false },
 		indent = { enabled = true },
 		-- Slower than the stock step = 10 / total = 200 (scroll.lua:30): a longer
@@ -235,6 +245,29 @@ local spec = {
 				Snacks.picker.grep({ cwd = _G.Config.initial_cwd })
 			end,
 			desc = "Grep (launch dir)",
+		},
+		-- Addon-scoped search: client repos hold hundreds of addons that all ship
+		-- models/sale_order.py and friends, so a repo-wide fuzzy match drowns in
+		-- same-named files. The nearest __manifest__.py marks the current addon.
+		{
+			"<leader>fa",
+			function()
+				local root = odoo_addon_root()
+				if root then
+					Snacks.picker.files({ cwd = root })
+				end
+			end,
+			desc = "Files (Odoo addon)",
+		},
+		{
+			"<leader>fA",
+			function()
+				local root = odoo_addon_root()
+				if root then
+					Snacks.picker.grep({ cwd = root })
+				end
+			end,
+			desc = "Grep (Odoo addon)",
 		},
 		{
 			"<leader>fb",
@@ -362,8 +395,6 @@ local spec = {
 			end,
 			desc = "Projects under launch cwd (swap)",
 		},
-		-- Explorer moved to mini.files (<leader>ed / <leader>ef in lua/plugins/mini.lua).
-
 		-- Notifications history (replacing mini.notify)
 		{
 			"<leader>en",

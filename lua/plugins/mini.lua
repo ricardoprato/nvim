@@ -30,19 +30,6 @@ return {
 		-- Other (mini.misc, mini.trailspace)
 		{ "<leader>or", "<Cmd>lua MiniMisc.resize_window()<CR>", desc = "Resize to default width" },
 		{ "<leader>ot", "<Cmd>lua MiniTrailspace.trim()<CR>", desc = "Trim trailspace" },
-
-		-- Explorer (mini.files, replaces snacks.explorer). Mirrors old snacks keys:
-		-- ed = cwd (project root), ef = current file's dir. Inside: h/l to navigate
-		-- miller columns, `=` to sync edits, m to bookmark, ' to jump to bookmark.
-		{ "<leader>ed", function() MiniFiles.open(vim.fn.getcwd()) end, desc = "Files (cwd)" },
-		{
-			"<leader>ef",
-			function()
-				local buf = vim.api.nvim_buf_get_name(0)
-				MiniFiles.open(buf ~= "" and buf or vim.fn.getcwd())
-			end,
-			desc = "Files (file dir)",
-		},
 	},
 	config = function()
 		-- Step 1: modules needed for first draw ================================
@@ -241,22 +228,6 @@ return {
 					update_n_lines = "gsn",
 				},
 			})
-			-- mini.files: miller-column explorer with live preview. Replaces
-			-- snacks.explorer (disabled in snacks.lua). use_as_default_explorer=false
-			-- so oil keeps ownership of directory buffers (oil is lazy=false and took
-			-- over from netrw at startup).
-			require("mini.files").setup({
-				windows = { preview = true, width_focus = 30, width_preview = 55 },
-				options = { use_as_default_explorer = false },
-			})
-			-- Odoo-friendly bookmarks, refreshed each open: 'c -> cwd (current client
-			-- repo, via auto_root), 'w -> launch/workspace root (~/odoo/<ver>). Set
-			-- ad-hoc ones with `m` inside the explorer.
-			_G.Config.new_autocmd("User", "MiniFilesExplorerOpen", function()
-				MiniFiles.set_bookmark("c", vim.fn.getcwd(), { desc = "cwd" })
-				MiniFiles.set_bookmark("w", _G.Config.initial_cwd, { desc = "workspace" })
-			end, "mini.files Odoo bookmarks")
-
 			require("mini.trailspace").setup()
 			require("mini.visits").setup()
 		end) -- end vim.schedule
