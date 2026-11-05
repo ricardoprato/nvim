@@ -49,7 +49,7 @@ return {
 	opts = {
 		terminal = {
 			split_side = "right",
-			split_width_percentage = 0.40,
+			split_width_percentage = 0.50,
 			snacks_win_opts = {
 				wo = {
 					signcolumn = "no",
