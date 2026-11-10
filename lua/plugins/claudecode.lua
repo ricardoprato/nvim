@@ -42,13 +42,16 @@ return {
 			desc = "Add file",
 			ft = { "NvimTree", "neo-tree", "oil", "minifiles", "netrw", "snacks_explorer" },
 		},
-		-- Diff management
 		{ "<leader>aa", "<cmd>ClaudeCodeDiffAccept<cr>", desc = "Accept diff" },
 		{ "<leader>ad", "<cmd>ClaudeCodeDiffDeny<cr>", desc = "Deny diff" },
 	},
 	opts = {
+		-- The nvim :terminal inherits $TMUX but is not tmux. With TMUX set, Claude
+		-- wraps its OSC 52 copy in a tmux DCS passthrough that libvterm cannot
+		-- parse, so the base64 payload is printed into the chat. Empty TMUX makes
+		-- Claude emit plain OSC 52, which the nvim terminal forwards to the clipboard.
+		env = { TMUX = "" },
 		terminal = {
-			split_side = "right",
 			split_width_percentage = 0.50,
 			snacks_win_opts = {
 				wo = {
@@ -71,13 +74,6 @@ return {
 					},
 				},
 			},
-		},
-		diff_opts = {
-			layout = "vertical",
-			open_in_new_tab = false,
-			hide_terminal_in_new_tab = true,
-			auto_close_on_accept = true,
-			show_diff_stats = true,
 		},
 	},
 }
