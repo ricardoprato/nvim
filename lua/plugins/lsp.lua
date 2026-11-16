@@ -75,7 +75,9 @@ return {
 					"tailwindcss",
 					"roslyn_ls",
 				},
-				automatic_installation = true,
+				-- The vim.lsp.enable list in nvim-lspconfig's config is the single source
+				-- of truth: it also covers servers Mason does not install (gdscript, clangd).
+				automatic_enable = false,
 			})
 			require("mason-tool-installer").setup({
 				-- Solo herramientas con consumidor real (conform o dap).

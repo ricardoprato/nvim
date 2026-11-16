@@ -36,7 +36,13 @@ return {
 
 		require("mini.basics").setup({
 			options = { basic = false },
-			mappings = { windows = false, move_with_alt = true },
+			mappings = {
+				-- Empty prefix disables mini's `\` option toggles: snacks owns `\s \w \r
+				-- \d \h` (lua/plugins/snacks.lua) and, registering on VeryLazy, silently
+				-- overwrote these anyway, leaving the rest undocumented.
+				option_toggle_prefix = "",
+				move_with_alt = true,
+			},
 		})
 
 		-- Icons + nvim-web-devicons mock
@@ -84,7 +90,6 @@ return {
 			require("mini.align").setup()
 			require("mini.bracketed").setup()
 
-			require("mini.comment").setup()
 			require("mini.diff").setup()
 
 			-- Git
